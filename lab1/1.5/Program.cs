@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Numerics;
 
 namespace CMLab1
 {
@@ -13,29 +14,61 @@ namespace CMLab1
         {
             A = a;
             this.eps = eps;
+            isComplex = new bool[a.Rows];
+            complices = new Complex[a.Rows];
         }
+        bool[] isComplex;
+        Complex[] complices;
         public bool Check()
         {
             double res = 0;
+            for (int i = 0; i < A.Rows - 1; i++)
+                isComplex[i] = (Math.Abs(A[i + 1, i]) > eps);
+            bool isAllGoodForComplices = false;
+            //проверяем мнимые
+            for (int i = 0; i < A.Rows; i++)
+                if (isComplex[i])
+                {
+                    double a = A[i, i];
+                    double b = A[i, i + 1];
+                    double c = A[i + 1, i + 1];
+                    double d = A[i + 1, i];
+                    Complex lambda = new Complex((a + c) / 2, 0);
+                    lambda += Complex.Sqrt((a + c) * (a + c) / 4 - a * c + b * d);
+                    if (lambda.Imaginary < eps)
+                        isComplex[i] = false;
+                    else
+                        isAllGoodForComplices = isAllGoodForComplices || Complex.Abs(lambda - complices[i]) > eps;
+                    complices[i] = lambda;
+                }
+            //проверяем вещественные корни
             for (int i = 0; i < A.Rows; i++)
                 for (int j = 0; j < i; j++)
-                    res += A[i, j] * A[i, j];
+                    if(!isComplex[j] || i != j + 1)
+                        res += A[i, j] * A[i, j];
             res = Math.Sqrt(res);
-            return res > eps;
+            return (res > eps) || isAllGoodForComplices;
         }
-        public double[] Find()
+        public Complex[] Find()
         {
-            while(Check())
+            A.Log("A");
+            while (Check())
             {
                 Matrix Q, R;
                 (Q, R) = FindQR(A);
-                (Q * R - A).Log("diff");
                 A = R * Q;
-                
+                A.Log("A");
             }
-            double[] res = new double[A.Rows];
+            Complex[] res = new Complex[A.Rows];
             for (int i = 0; i < A.Rows; i++)
-                res[i] = A[i, i];
+                if(isComplex[i])
+                {
+                    res[i] = complices[i];
+                    res[i + 1] = Complex.Conjugate(complices[i]);
+                    i++;
+                }
+                else
+                    res[i] = A[i, i];
             return res;
         }
         private (Matrix, Matrix) FindQR(Matrix mat)
@@ -55,6 +88,7 @@ namespace CMLab1
                 v[i] += vi;
                 H -= 2 * (v * v.Transpose()) / (double)(v.Transpose() * v);
                 copyMat = H * copyMat;
+                Q *= H;
             }
             return (Q, copyMat);
         }
@@ -379,6 +413,20 @@ namespace CMLab1
     }
     class Program
     {
+        static string ComplexToString(Complex complex)
+        {
+            string resString = "";
+            if (complex.Imaginary != 0)
+            {
+                if(complex.Imaginary > 0)
+                    resString += String.Format("{0} + {1}i", complex.Real.ToString("0.00"), complex.Imaginary.ToString("0.00")) + "\n";
+                else
+                    resString += String.Format("{0} - {1}i", complex.Real.ToString("0.00"), (Math.Abs(complex.Imaginary)).ToString("0.00")) + "\n";
+            }
+            else
+                resString += complex.Real.ToString("0.00") + "\n";
+            return resString;
+        }
         static void Main(string[] args)
         {
             var txt = File.ReadAllLines("in.txt");
@@ -398,7 +446,7 @@ namespace CMLab1
             var res = qr.Find();
             string resString = "";
             for (int i = 0; i < res.Length; i++)
-                resString += res[i].ToString() + "\n";
+                resString += ComplexToString(res[i]);
             File.WriteAllText("out.txt", resString);
             Console.ReadKey();
         }
