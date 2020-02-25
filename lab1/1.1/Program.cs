@@ -63,7 +63,10 @@ namespace CMLab1
             for (int j = 0; j < U.Columns; j++)
                 U[0, j] = this[0, j];
             for (int j = 0; j < U.Rows; j++)
-                L[j, 0] = this[j, 0] / U[0, 0];
+            	if(U[0, 0] != 0)
+                	L[j, 0] = this[j, 0] / U[0, 0];
+                else
+                	L[j, 0] = 0;
             for (int i = 1; i < Rows; i++)
             {
                 for (int j = i; j < U.Columns; j++)
@@ -78,7 +81,10 @@ namespace CMLab1
                     L[j, i] = this[j, i];
                     for (int k = 0; k < i; k++)
                         L[j, i] -= L[j, k] * U[k, i];
-                    L[j, i] /= U[i, i];
+                    if(U[i, i] != 0)
+                    	L[j, i] /= U[i, i];
+                    else
+                    	L[j, i] = 0;
                 }
             }
         }
