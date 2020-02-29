@@ -38,11 +38,12 @@ namespace CMLab1
 
         public void Solve()
         {
-            while(true)
+            while (true)
             {
                 var xNext = new Matrix(betta);
                 xNext += alpha * X;
-                if (Distance(X, xNext) < eps)
+                double epsK = alpha.Norm() / (1 - alpha.Norm()) * Distance(X, xNext);
+                if (epsK < eps)
                     break;
                 X = xNext;
             }
@@ -76,6 +77,19 @@ namespace CMLab1
             double res = 0;
             for (int i = 0; i < Rows; i++)
                 res += this[i, i];
+            return res;
+        }
+	public double Norm()
+        {
+            double res = 0;
+            for(int i = 0; i < Rows; i++)
+            {
+                double cur = 0;
+                for (int j = 0; j < Columns; j++)
+                    cur += Math.Abs(this[i, j]);
+                if (cur > res)
+                    res = cur;
+            }
             return res;
         }
         public Matrix LowTriangal()

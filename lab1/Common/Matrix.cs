@@ -20,6 +20,21 @@ namespace ConsoleApp1
                 res += this[i, i];
             return res;
         }
+
+        public double Norm()
+        {
+            double res = 0;
+            for(int i = 0; i < Rows; i++)
+            {
+                double cur = 0;
+                for (int j = 0; j < Columns; j++)
+                    cur += Math.Abs(this[i, j]);
+                if (cur > res)
+                    res = cur;
+            }
+            return res;
+        }
+
         public Matrix LowTriangal()
         {
             Matrix res = new Matrix(Rows, Columns);
