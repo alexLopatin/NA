@@ -58,7 +58,8 @@ namespace CMLab1
             {
                 var xNext = firstMat * X;
                 xNext += secondMat;
-                if (Distance(X, xNext) < eps)
+                double epsK = C.Norm() / (1 - alpha.Norm()) * Distance(X, xNext);
+                if (epsK < eps)
                     break;
                 X = xNext;
             }
