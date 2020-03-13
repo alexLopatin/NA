@@ -1,59 +1,38 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Threading;
+using System.Text;
 
 namespace NMCP
 {
-    class RotationAlg
+    class RotationAlgSync
     {
         private Matrix A;
         private double eps;
         private Matrix eigenVectorsRaw;
-        public RotationAlg(Matrix inMat, double eps)
+        public RotationAlgSync(Matrix inMat, double eps)
         {
             A = inMat;
             this.eps = eps;
             eigenVectorsRaw = Matrix.Identity(A.Rows);
         }
+        private (int, int) FindMax()
+        {
+            (int, int) result = (0, 0);
+            double max = 0;
+            for (int i = 0; i < A.Rows; i++)
+                for (int j = 0; j < i; j++)
+                    if (Math.Abs(A[i, j]) > max)
+                        (result, max) = ((i, j), Math.Abs(A[i, j]));
+            return result;
+        }
         private void Rotate()
         {
-            List<(int, int, double)> maxElems = new List<(int, int, double)>();
-            bool[] isLocked = new bool[A.Columns];
-            for (int k = 0; k < A.Columns/2; k++)
-            {
-                int i, j = 0;
-                double fi = 0;
-                (i, j) = A.FindMax(
-                    (i, j) => i != j && !isLocked[i] && !isLocked[j]
-                    );
-                isLocked[i] = true;
-                isLocked[j] = true;
-                fi = 0.5 * Math.Atan(2 * A[i, j] / (A[i, i] - A[j, j]));
-                maxElems.Add((i, j, fi));
-            }
-            Task[] taskArray = new Task[maxElems.Count];
-            
-            for (int k = 0; k < maxElems.Count; k++)
-            {
-                int i, j = 0;
-                double fi = 0;
-                (i, j, fi) = maxElems[k];
-                taskArray[k] = Task.Run(() => SumRows(A, i, j, fi));
-            }
-            Task.WaitAll(taskArray);
-            for (int k = 0; k < maxElems.Count; k++)
-            {
-                int i, j = 0;
-                double fi = 0;
-                (i, j, fi) = maxElems[k];
-                taskArray[k] = Task.Run(() =>
-                {
-                    SumColumns(A, i, j, fi);
-                    SumColumns(eigenVectorsRaw, i, j, fi);
-                });
-            }
-            Task.WaitAll(taskArray);
+            int i, j = 0;
+            (i, j) = FindMax();
+            double fi = 0.5 * Math.Atan(2 * A[i, j] / (A[i, i] - A[j, j]));
+            SumRows(A, i, j, fi);
+            SumColumns(A, i, j, fi);
+            SumColumns(eigenVectorsRaw, i, j, fi);
         }
         private bool IsEnough()
         {
@@ -66,16 +45,13 @@ namespace NMCP
         }
         private void SumRows(Matrix m, int i, int j, double fi)
         {
-            var iRow = m.RowReference(i);
-            var jRow = m.RowReference(j);
-            double[] tmp = new double[iRow.Length];
-            iRow.CopyTo(tmp, 0);
+            double[] tmp = m.Row(i);
             double sinFi = Math.Sin(fi);
             double cosFi = Math.Cos(fi);
             for (int k = 0; k < m.Columns; k++)
-                iRow[k] = iRow[k] * cosFi + jRow[k] * sinFi;
+                m[i, k] = m[i, k] * cosFi + m[j, k] * sinFi;
             for (int k = 0; k < m.Columns; k++)
-                jRow[k] = -tmp[k] * sinFi + jRow[k] * cosFi;
+                m[j, k] = -tmp[k] * sinFi + m[j, k] * cosFi;
         }
         private void SumColumns(Matrix m, int i, int j, double fi)
         {

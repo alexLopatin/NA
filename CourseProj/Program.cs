@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Diagnostics;
+using System.Threading;
 
 namespace NMCP
 {
@@ -19,15 +21,23 @@ namespace NMCP
         }
         static void Main(string[] args)
         {
-            Matrix matrix = GenerateSymMatrix(200);
+            Matrix matrix = GenerateSymMatrix(150);
             File.Delete("out.txt");
             var stream = File.OpenWrite("out.txt");
             matrix.WriteStream(stream);
             stream.Close();
 
-            RotationAlg rotationAlg = new RotationAlg(matrix, 0.01d);
-            rotationAlg.Calculate();
-            Console.WriteLine("end");
+            RotationAlgAsync rotationAlgAsync = new RotationAlgAsync(new Matrix(matrix), 0.01d);
+            RotationAlgSync rotationAlgSync = new RotationAlgSync(new Matrix(matrix), 0.01d);
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            rotationAlgAsync.Calculate();
+            long timeAsync = stopWatch.ElapsedMilliseconds;
+            stopWatch.Reset();
+            stopWatch.Start();
+            rotationAlgSync.Calculate();
+            long timeSync = stopWatch.ElapsedMilliseconds;
+            Console.WriteLine("Async time: {0}; Sync time: {1}.", timeAsync, timeSync);
         }
     }
 }

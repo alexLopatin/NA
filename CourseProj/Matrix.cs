@@ -268,18 +268,6 @@ namespace NMCP
                     transposed[i, j] = this[j, i];
             return transposed;
         }
-        public (int, int) FindMax(Func<int, int, bool> predicate)
-        {
-            (int, int) maxIndex = (0, 0);
-            double maxValue = double.NegativeInfinity;
-
-            for (int i = 0; i < Rows; i++)
-                for (int j = 0; j < Columns; j++)
-                    if (predicate(i, j) && maxValue < Math.Abs(this[i, j]))
-                        (maxIndex, maxValue) = ((i, j), Math.Abs(this[i, j]));
-
-            return maxIndex;
-        }
         public static Matrix operator *(Matrix a, Matrix b)
         {
             if (a.Columns != b.Rows)
@@ -426,9 +414,9 @@ namespace NMCP
                     throw new Exception("For matrices use [i, j] indexer instead of [i] for vectors");
             }
         }
-        public double[] RowReference(int i)
+        public double[] Row(int i)
         {
-            return matrix[i];
+            return (double[])matrix[i].Clone();
         }
         public double[] Column(int i)
         {
