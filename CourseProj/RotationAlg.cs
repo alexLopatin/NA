@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace NMCP
 {
@@ -17,12 +18,42 @@ namespace NMCP
         }
         private void Rotate()
         {
-            int i, j = 0;
-            (i, j) = A.FindMax((i, j) => i != j);
-            double fi = 0.5 * Math.Atan(2 * A[i, j] / (A[i, i] - A[j, j]));
-            SumRows(A, i, j, fi);
-            SumColumns(A, i, j, fi);
-            SumColumns(eigenVectorsRaw, i, j, fi);
+            List<(int, int, double)> maxElems = new List<(int, int, double)>();
+            bool[] isLocked = new bool[A.Columns];
+            for (int k = 0; k < A.Columns/2; k++)
+            {
+                int i, j = 0;
+                double fi = 0;
+                (i, j) = A.FindMax(
+                    (i, j) => i != j && !isLocked[i] && !isLocked[j]
+                    );
+                isLocked[i] = true;
+                isLocked[j] = true;
+                fi = 0.5 * Math.Atan(2 * A[i, j] / (A[i, i] - A[j, j]));
+                maxElems.Add((i, j, fi));
+            }
+            Task[] taskArray = new Task[maxElems.Count];
+            
+            for (int k = 0; k < maxElems.Count; k++)
+            {
+                int i, j = 0;
+                double fi = 0;
+                (i, j, fi) = maxElems[k];
+                taskArray[k] = Task.Run(() => SumRows(A, i, j, fi));
+            }
+            Task.WaitAll(taskArray);
+            for (int k = 0; k < maxElems.Count; k++)
+            {
+                int i, j = 0;
+                double fi = 0;
+                (i, j, fi) = maxElems[k];
+                taskArray[k] = Task.Run(() =>
+                {
+                    SumColumns(A, i, j, fi);
+                    SumColumns(eigenVectorsRaw, i, j, fi);
+                });
+            }
+            Task.WaitAll(taskArray);
         }
         private bool IsEnough()
         {

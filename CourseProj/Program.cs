@@ -19,7 +19,7 @@ namespace NMCP
         }
         static void Main(string[] args)
         {
-            Matrix matrix = GenerateSymMatrix(100);
+            Matrix matrix = GenerateSymMatrix(200);
             File.Delete("out.txt");
             var stream = File.OpenWrite("out.txt");
             matrix.WriteStream(stream);
