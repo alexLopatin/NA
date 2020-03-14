@@ -31,7 +31,8 @@ namespace NMCP
         {
             List<(int, int, double)> maxElems = new List<(int, int, double)>();
             isLocked = new bool[A.Columns];
-            for (int k = 0; k < A.Columns/2; k++)
+            int count = (A.Columns % 2 == 1) ? (A.Columns / 2) : Math.Max(1, A.Columns / 2 - 1);
+            for (int k = 0; k < count; k++)
             {
                 int i, j = 0;
                 double fi = 0;

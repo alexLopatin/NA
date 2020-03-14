@@ -68,7 +68,6 @@ namespace NMCP
             while (!IsEnough())
                 Rotate();
         }
-
         public double[] EigenValues
         {
             get
