@@ -3,6 +3,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Threading;
 using System.Collections.Generic;
+using MPI;
 
 namespace NMCP
 {
@@ -41,11 +42,12 @@ namespace NMCP
         static void Main(string[] args)
         {
             int size = int.Parse(args[0]);
+            //int size = 5;
             Matrix matrix = GenerateSymMatrix(size);
-            File.Delete("out.txt");
-            var stream = File.OpenWrite("out.txt");
-            matrix.WriteStream(stream);
-            stream.Close();
+            //File.Delete("out.txt");
+            //var stream = File.OpenWrite("out.txt");
+            //matrix.WriteStream(stream);
+            //stream.Close();
 
             RotationAlgAsync rotationAlgAsync = new RotationAlgAsync(new Matrix(matrix), 0.01d);
             RotationAlgSync rotationAlgSync = new RotationAlgSync(new Matrix(matrix), 0.01d);
@@ -53,6 +55,7 @@ namespace NMCP
             stopWatch.Start();
             rotationAlgAsync.Calculate();
             long timeAsync = stopWatch.ElapsedMilliseconds;
+            Console.Write("Async time: {0} ms;", timeAsync);
             stopWatch.Reset();
             stopWatch.Start();
             rotationAlgSync.Calculate();
@@ -66,9 +69,9 @@ namespace NMCP
             for (int i = 0; i < rotationAlgAsync.EigenValues.Length; i++)
                 if (error < Math.Abs(EigenValuesAsync[i] - EigenValuesSync[i]))
                     error = Math.Abs(EigenValuesAsync[i] - EigenValuesSync[i]);
-
-            Console.WriteLine("Async time: {0} ms; Sync time: {1} ms; Error: {2}.", timeAsync, timeSync, error);
-            Console.WriteLine("Synс correctness: {0}; Async correctness: {1}.",
+            
+            Console.WriteLine(" Sync time: {1} ms; Error: {2}.", timeAsync, timeSync, error);
+            Console.WriteLine("Sync correctness: {0}; Async correctness: {1}.",
                 Check(matrix, rotationAlgSync.EigenValues, rotationAlgSync.EigenVectors),
                 Check(matrix, rotationAlgAsync.EigenValues, rotationAlgAsync.EigenVectors));
         }

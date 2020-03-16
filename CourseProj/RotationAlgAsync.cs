@@ -10,6 +10,7 @@ namespace NMCP
         private Matrix A;
         private double eps;
         private Matrix eigenVectorsRaw;
+        
         public RotationAlgAsync(Matrix inMat, double eps)
         {
             A = inMat;
@@ -23,10 +24,16 @@ namespace NMCP
             double max = 0;
             for(int i = 0; i < A.Rows; i++)
                 for (int j = 0; j < i; j++)
-                    if(Math.Abs(A[i, j])  > max && !isLocked[i] && !isLocked[j])
+                {
+                    if (isLocked[i])
+                        break;
+                    if (Math.Abs(A[i, j]) > max && !isLocked[j])
                         (result, max) = ((i, j), Math.Abs(A[i, j]));
+                }
+
             return result;
         }
+
         private void Rotate()
         {
             List<(int, int, double)> maxElems = new List<(int, int, double)>();
@@ -34,9 +41,12 @@ namespace NMCP
             int count = (A.Columns % 2 == 1) ? (A.Columns / 2) : Math.Max(1, A.Columns / 2 - 1);
             for (int k = 0; k < count; k++)
             {
-                int i, j = 0;
+                int i = 0;
+                int j = 0;
                 double fi = 0;
                 (i, j) = FindMax();
+                if (Math.Abs(A[i, j]) < eps / A.Rows)
+                    break;
                 isLocked[i] = true;
                 isLocked[j] = true;
                 fi = 0.5 * Math.Atan(2 * A[i, j] / (A[i, i] - A[j, j]));
