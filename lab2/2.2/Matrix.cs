@@ -11,6 +11,45 @@ namespace ConsoleApp1
         public int Columns { get; private set; }
         public Matrix L { get; private set; }
         public Matrix U { get; private set; }
+        public double[] Solve(double[] b)
+        {
+            double[] x = new double[b.Length];
+            double[] z = new double[b.Length];
+            RecalculateLU();
+            for (int i = 0; i < Rows; i++)
+            {
+                z[i] = b[i];
+                for (int j = 0; j < i; j++)
+                    z[i] -= L[i, j] * z[j];
+            }
+            for (int i = Rows - 1; i >= 0; i--)
+            {
+                x[i] = z[i];
+                for (int j = i + 1; j < Rows; j++)
+                    x[i] -= U[i, j] * x[j];
+                x[i] /= U[i, i];
+            }
+            return x;
+        }
+        public Matrix Solve(Matrix b)
+        {
+            Matrix x = new Matrix(b.Rows, 1);
+            Matrix z = new Matrix(b.Rows, 1);
+            for (int i = 0; i < Rows; i++)
+            {
+                z[i] = b[i];
+                for (int j = 0; j < i; j++)
+                    z[i] -= L[i, j] * z[j];
+            }
+            for (int i = Rows - 1; i >= 0; i--)
+            {
+                x[i] = z[i];
+                for (int j = i + 1; j < Rows; j++)
+                    x[i] -= U[i, j] * x[j];
+                x[i] /= U[i, i];
+            }
+            return x;
+        }
         public double Trace()
         {
             if (Rows != Columns)
@@ -20,6 +59,21 @@ namespace ConsoleApp1
                 res += this[i, i];
             return res;
         }
+
+        public double Norm()
+        {
+            double res = 0;
+            for(int i = 0; i < Rows; i++)
+            {
+                double cur = 0;
+                for (int j = 0; j < Columns; j++)
+                    cur += Math.Abs(this[i, j]);
+                if (cur > res)
+                    res = cur;
+            }
+            return res;
+        }
+
         public Matrix LowTriangal()
         {
             Matrix res = new Matrix(Rows, Columns);
@@ -50,12 +104,16 @@ namespace ConsoleApp1
         {
             if (Rows != Columns)
                 throw new Exception("Can't inverse not square matrix");
-            Matrix result = new Matrix(Rows, Columns);
-            var det = Determinant();
-            for (int i = 0; i < Rows; i++)
-                for (int j = 0; j < Columns; j++)
-                    result[i, j] = ((i + j) % 2 == 0 ? (1) : (-1)) * GetMinorSubMatrix(i, j).Determinant() / det;
-            return result.Transpose();
+            Matrix[] res = new Matrix[Columns];
+            RecalculateLU();
+            for (int i = 0; i < Columns; i++)
+            {
+                Matrix curVector = new Matrix(Columns, 1);
+                curVector[i] = 1;
+                res[i] = Solve(curVector);
+            }
+            return new Matrix(res);
+                
         }
         public void RecalculateLU()
         {
@@ -107,6 +165,17 @@ namespace ConsoleApp1
                 for (int j = 0; j < Columns; j++)
                     matrix[i][j] = double.Parse(columns[j], CultureInfo.InvariantCulture);
             }
+        }
+        public Matrix(Matrix[] columns)
+        {
+            Rows = columns[0].Rows;
+            Columns = columns.Length;
+            matrix = new double[Rows][];
+            for (int i = 0; i < Rows; i++)
+                matrix[i] = new double[Columns];
+            for (int i = 0; i < Rows; i++)
+                for (int j = 0; j < Columns; j++)
+                    this[i, j] = columns[j][i];
         }
         public Matrix(string[] lineString)
         {
@@ -290,7 +359,7 @@ namespace ConsoleApp1
                 return column;
             }
             else if (Rows == 1)
-                return matrix[0];
+                return (double[])matrix[0].Clone();
             else
                 throw new Exception("Can't cast matrix to vector array");
         }
