@@ -439,7 +439,7 @@ namespace ConsoleApp1
             else
                 return 0;
         }
-        public double[] Calculate(double[] D)
+        public double[] SolveTridiagonal(double[] D)
         {
             int n = Rows;
             double[] x = new double[n];

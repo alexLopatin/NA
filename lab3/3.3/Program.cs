@@ -22,12 +22,12 @@ namespace ConsoleApp1
             double[] b = new double[Degree + 1];
             for (int i = 0; i < b.Length; i++)
                 for (int j = 0; j < Points.Count; j++)
-                    b[i] += Points[i].Y * Math.Pow(Points[i].X, i);
+                    b[i] += Points[j].Y * Math.Pow(Points[j].X, i);
             for (int i = 0; i < Degree + 1; i++)
                 for (int j = 0; j < Degree + 1; j++)
                     for (int k = 0; k < Points.Count; k++)
                         mat[i, j] += Math.Pow(Points[k].X, i + j);
-            var a = mat.Calculate(b);
+            var a = mat.Solve(b);
             Polynom res = new Polynom();
             for (int i = 0; i <= Degree; i++)
                 res[i] = a[i];
@@ -39,6 +39,7 @@ namespace ConsoleApp1
         static void Main(string[] args)
         {
             List<Point> points = new List<Point>();
+            
             points.Add((1d, 3.4142));
             points.Add((1.9, 2.9818));
             points.Add((2.8, 3.3095));
