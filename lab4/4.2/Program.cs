@@ -44,7 +44,7 @@ namespace ConsoleApp1
         static void RungeRomberg(double[] yh, double[] y2h, double p)
         {
             Console.WriteLine("Runge-Romberg error:");
-            for(int i = 0; i < y2h.Length; i++)
+            for (int i = 0; i < y2h.Length; i++)
             {
                 double error = (yh[i * 2] - y2h[i]) / (Math.Pow(2, p) - 1);
                 Console.WriteLine(error);
@@ -53,7 +53,7 @@ namespace ConsoleApp1
         }
         static void Error(double[] yC, string name, double h = 0.1d)
         {
-            double[] y = new double[1+ (int)((b-a)/h)];
+            double[] y = new double[1 + (int)((b - a) / h)];
             for (int i = 0; i < 1 + (int)((b - a) / h); i++)
                 y[i] = ExactF(i * h);
             double[] e = new double[1 + (int)((b - a) / h)];
@@ -76,35 +76,38 @@ namespace ConsoleApp1
             y0 = n1;
             (y, z) = RungeCutta(h);
             fi.Add(z[z.Length - 1] - y[y.Length - 1] - 1);
-            while(Math.Abs(fi.Last()) > eps)
+            while (Math.Abs(fi.Last()) > eps)
             {
                 n.Add(n[n.Count - 1] - (n[n.Count - 1] - n[n.Count - 2]) * fi[n.Count - 1] / (fi[n.Count - 1] - fi[n.Count - 2]));
                 y0 = n[n.Count - 1];
                 (y, z) = RungeCutta(h);
-                fi.Add(z[z.Length-1]- y[y.Length - 1] - 1);
+                fi.Add(z[z.Length - 1] - y[y.Length - 1] - 1);
             }
             return y;
         }
         static double[] FiniteDifference(double h)
         {
-            Matrix mat = new Matrix((int)((b - a) / h), (int)((b - a) / h));
-            double x = a;
+            Matrix mat = new Matrix((int)((b - a) / h + 1), (int)((b - a) / h) + 1);
+
+            double[] x = new double[(int)((b - a) / h) + 1];
+            x[0] = a + h;
+            for (int i = 1; i < x.Length; i++)
+                x[i] = x[i - 1] + h;
+            for (int i = 0; i < mat.Columns; i++)
+                mat[i, i] = -2 + h * h * q(x[i]);
             for (int i = 0; i < mat.Columns - 1; i++)
-                mat[i, i] = -2 + h * h * q(x + (i+1) * h);
+                mat[i, i + 1] = 1 + h * p(x[i]) / 2;
             for (int i = 1; i < mat.Columns; i++)
-                mat[i-1, i] = 1 + h * p(x + (i-1) * h) / 2;
-            for (int i = 0; i < mat.Columns - 2; i++)
-                mat[i + 1, i] = 1 - h * p(x + (i) * h) / 2;
+                mat[i, i - 1] = 1 - h * p(x[i]) / 2;
             double[] d = new double[mat.Rows];
-            d[0] = (p(x + h) * h / 2 - 1)*y0;
-            d[mat.Rows - 1] = -1;
-            mat[mat.Rows - 1, mat.Rows - 1] = 1 / h + 1;
-            mat[mat.Rows - 1, mat.Rows - 2] = -1 / h;
-            //mat.Log("mat");
+            d[0] = 0;
+            d[mat.Rows - 1] = -h;
+            mat[mat.Rows - 1, mat.Rows - 1] = h - 1;
+            mat[mat.Rows - 1, mat.Rows - 2] = 1;
+            mat.Log("mat");
             double[] y = mat.SolveTridiagonal(d);
-            double[] res = new double[mat.Rows + 1];
-            Array.Copy(y, 0, res, 1, mat.Rows);
-            res[0] = y0;
+            double[] res = new double[mat.Rows];
+            Array.Copy(y, 0, res, 1, mat.Rows - 1);
             return res;
         }
 
@@ -115,18 +118,19 @@ namespace ConsoleApp1
             b = 1;
             yD0 = 1;
             f = (x, y, z) => z;
-            g = (x, y, z) => (2*z+y* Math.Exp(x)) /(Math.Exp(x) + 1);
-            ExactF = (x) => Math.Exp(x)-1;
-            p = (x) => -2 / (Math.Exp(x) + 1);
-            q = (x) => -Math.Exp(x) / (Math.Exp(x) + 1);
+            g = (x, y, z) => (2 * z + y * Math.Exp(x)) / (Math.Exp(x) + 1);
+            ExactF = (x) => Math.Exp(x) - 1;
+            p = (x) => (-2 / (Math.Exp(x) + 1));
+            q = (x) => (-Math.Exp(x) / (Math.Exp(x) + 1));
 
             var y = Shooting(h, 1.0d, 0.8d, 0.001d);
             Error(y, "Shooting");
             RungeRomberg(y, Shooting(2 * h, 1.0d, 0.8d, 0.001d), 4);
+            h /= 4;
             y = FiniteDifference(h);
-            Error(y, "Finite Difference");
+            Error(y, "Finite Difference", h);
             RungeRomberg(y, FiniteDifference(2 * h), 1);
-            
+
         }
     }
 }

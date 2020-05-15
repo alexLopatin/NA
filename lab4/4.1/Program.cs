@@ -25,7 +25,7 @@ namespace ConsoleApp1
             {
                 double K1 = h * f(x, y[i - 1], z[i - 1]);
                 double L1 = h * g(x, y[i - 1], z[i - 1]);
-                double K2 = h * f(x + h / 2, y[i - 1] + K1/2, z[i - 1] + L1 / 2);
+                double K2 = h * f(x + h / 2, y[i - 1] + K1 / 2, z[i - 1] + L1 / 2);
                 double L2 = h * g(x + h / 2, y[i - 1] + K1 / 2, z[i - 1] + L1 / 2);
                 double K3 = h * f(x + h / 2, y[i - 1] + K2 / 2, z[i - 1] + L2 / 2);
                 double L3 = h * g(x + h / 2, y[i - 1] + K2 / 2, z[i - 1] + L2 / 2);
@@ -94,7 +94,7 @@ namespace ConsoleApp1
             double x = a;
             for (int i = 1; i <= (b - a) / h; i++, x += h)
             {
-                z[i] = z[i - 1] + h * g(x, y[i - 1], z[i-1]);
+                z[i] = z[i - 1] + h * g(x, y[i - 1], z[i - 1]);
                 y[i] = y[i - 1] + h * f(x, y[i], z[i]);
             }
             return y;
@@ -109,12 +109,12 @@ namespace ConsoleApp1
             Array.Copy(g0, 0, G, 0, g0.Length);
             Array.Copy(z0, 0, z, 0, z0.Length);
             Array.Copy(y0, 0, y, 0, y0.Length);
-            double x = a + 3*h;
+            double x = a + 3 * h;
             for (int i = 4; i <= (b - a) / h; i++, x += h)
             {
-                z[i] = z[i - 1] + h /24 * (55* G[i - 1] -59*G[i-2] +37* G[i - 3]-9* G[i - 4]);
+                z[i] = z[i - 1] + h / 24 * (55 * G[i - 1] - 59 * G[i - 2] + 37 * G[i - 3] - 9 * G[i - 4]);
                 y[i] = y[i - 1] + h / 24 * (55 * F[i - 1] - 59 * F[i - 2] + 37 * F[i - 3] - 9 * F[i - 4]);
-                F[i] = f(x, y[i-1], z[i-1]);
+                F[i] = f(x, y[i - 1], z[i - 1]);
                 G[i] = g(x, y[i - 1], z[i - 1]);
             }
             return y;
@@ -123,7 +123,7 @@ namespace ConsoleApp1
         static void RungeRomberg(double[] yh, double[] y2h, double p)
         {
             Console.WriteLine("Runge-Romberg error:");
-            for(int i = 0; i < y2h.Length; i++)
+            for (int i = 0; i < y2h.Length; i++)
             {
                 double error = (yh[i * 2] - y2h[i]) / (Math.Pow(2, p) - 1);
                 Console.WriteLine(error);
@@ -141,7 +141,7 @@ namespace ConsoleApp1
             for (int i = 0; i <= 10; i++)
                 e[i] = Math.Abs(y[i] - yC[i]);
             for (int i = 0; i <= 10; i++)
-                Console.WriteLine(e[i]);
+                Console.WriteLine("{0} ({1}%)", e[i], Math.Abs(1 - yC[i] / y[i])*100);
         }
 
         static void Main(string[] args)
@@ -152,7 +152,7 @@ namespace ConsoleApp1
             y0 = 1;
             yD0 = 1;
             f = (x, y, z) => z;
-            g = (x, y, z) => -z/x;
+            g = (x, y, z) => -z / x;
             ExactF = (x) => 1 + Math.Log(x);
 
             Error(Euler(h), "Euler");
@@ -167,7 +167,7 @@ namespace ConsoleApp1
             {
                 b = a + 4 * h;
                 double[] f0, g0, y0, z0;
-                (f0,g0, y0, z0)= RungeCuttaF(h);
+                (f0, g0, y0, z0) = RungeCuttaF(h);
                 b = 2d;
                 Error(Adams(h, f0, g0, z0, y0), "Adams");
                 RungeRomberg(Adams(h, f0, g0, z0, y0), Adams(2 * h, f0, g0, z0, y0), 4);
