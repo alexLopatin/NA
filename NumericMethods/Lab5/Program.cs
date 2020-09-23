@@ -30,7 +30,7 @@ namespace Lab5
 
 			var finiteDiff = new FiniteDifference(conditions, @params);
 
-			var result = finiteDiff.Solve(new[] { 1.0d, .0d, .0d }, (x, t) => 0);
+			var result = finiteDiff.SolveImplicit(new[] { 1.0d, .0d, .0d }, (x, t) => 0);
 			var errors = finiteDiff.FindError((x, t) => Math.Exp(-t * 4 * Math.PI * Math.PI) * Math.Sin(2 * Math.PI * x));
 
 			var maxError = 0.0d;
