@@ -8,6 +8,38 @@ namespace Lab5
 {
 	class Program
 	{
+		static double FindMedian(double[,] grid)
+		{
+			List<double> linear = new List<double>();
+
+			for (int i = 0; i < grid.GetLength(0); i++)
+			{
+				for (int j = 0; j < grid.GetLength(1); j++)
+				{
+					linear.Add(grid[i, j]);
+				}
+			}
+
+			linear.Sort();
+
+			return linear[linear.Count / 2];
+		}
+
+		static double FindMax(double[,] grid)
+		{
+			var max = 0.0d;
+
+			for (int i = 0; i < grid.GetLength(0); i++)
+			{
+				for (int j = 0; j < grid.GetLength(1); j++)
+				{
+					max = Math.Max(max, grid[i, j]);
+				}
+			}
+
+			return max;
+		}
+
 		static void Main(string[] args)
 		{
 			var conditions = new BoundaryConditionsThirdDegree()
@@ -24,26 +56,24 @@ namespace Lab5
 				SpaceBoundLeft = 0,
 				SpaceBoundRight = 1,
 				TimeLimit = 1d,
-				SpaceStepCount = 50,
-				TimeStepCount = 25000
+				SpaceStepCount = 200,
+				TimeStepCount = 90000
 			};
 
-			var finiteDiff = new FiniteDifference(conditions, @params);
+			//var method = new FiniteDifference(conditions, @params);
 
-			var result = finiteDiff.SolveImplicit(new[] { 1.0d, .0d, .0d }, (x, t) => 0);
-			var errors = finiteDiff.FindError((x, t) => Math.Exp(-t * 4 * Math.PI * Math.PI) * Math.Sin(2 * Math.PI * x));
+			//var result = method.SolveExplicit(new[] { 1.0d, .0d, .0d }, (x, t) => 0);
+			var method = new CrankNikolsonMethod(conditions, @params);
 
-			var maxError = 0.0d;
+			var result = method.Solve(new[] { 1.0d, .0d, .0d }, (x, t) => 0);
 
-			for(int i = 0; i < errors.GetLength(0); i++)
-			{
-				for (int j = 0; j < errors.GetLength(1); j++)
-				{
-					maxError = Math.Max(maxError, errors[i, j]);
-				}
-			}
+			var errors = method.FindError((x, t) => Math.Exp(-t * 4 * Math.PI * Math.PI) * Math.Sin(2 * Math.PI * x));
 
-			Console.WriteLine($"Max error: {maxError}");
+			var maxError = FindMax(errors);
+			var median = FindMedian(errors);
+
+			Console.WriteLine($"Max error: {maxError}; median error: {median}");
+			Console.ReadKey();
 		}
 	}
 }
