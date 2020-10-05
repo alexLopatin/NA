@@ -1,17 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using NumericMethods.Core.Common;
 
-namespace NumericMethods.Core
+namespace NumericMethods.Core.Numerics
 {
-	struct Point
-	{
-		public double X;
-		public double Y;
-		public Point(double x, double y) => (X, Y) = (x, y);
-		public static implicit operator Point((double, double) point) => new Point(point.Item1, point.Item2);
-	}
-	class Derivative
+	public class Derivative
 	{
 		private List<Point> Points;
 		public Derivative(List<Point> points) => Points = points;

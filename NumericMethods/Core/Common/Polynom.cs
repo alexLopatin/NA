@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace NumericMethods.Core
+namespace NumericMethods.Core.Common
 {
-	class Polynom : IEnumerable<KeyValuePair<int, double>>
+	public class Polynom : IEnumerable<KeyValuePair<int, double>>
 	{
 		Dictionary<int, double> coefs = new Dictionary<int, double>();
 		

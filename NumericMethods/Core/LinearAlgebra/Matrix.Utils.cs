@@ -6,6 +6,18 @@ namespace NumericMethods.Core.LinearAlgebra
 {
 	public partial class Matrix
 	{
+		public double[] Row(int i)
+		{
+			return (double[])_matrix[i].Clone();
+		}
+		public double[] Column(int i)
+		{
+			double[] column = new double[Rows];
+			for (int j = 0; j < Rows; j++)
+				column[j] = this[j, i];
+			return column;
+		}
+
 		public double Magnitude()
 		{
 			double res = 0;
