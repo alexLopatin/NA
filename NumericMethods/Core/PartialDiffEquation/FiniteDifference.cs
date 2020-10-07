@@ -68,7 +68,7 @@ namespace NumericMethods.Core.PartialDiffEquation
 						+ f(GetSpaceCoordinate(j), GetTimeCoordinate(k - 1)) * tau;
 				}
 
-				SetBorderGrid(k);
+				SetBorderGrid(coefs, k);
 			}
 
 			return _grid.Clone() as double[,];
@@ -129,8 +129,12 @@ namespace NumericMethods.Core.PartialDiffEquation
 			return _grid.Clone() as double[,];
 		}
 
-		private void SetBorderGrid(int k)
+		private void SetBorderGrid(double[] coefs, int k)
 		{
+			var a = coefs[0];
+			var b = coefs[1];
+			var c = coefs[2];
+
 			var h = (_params.SpaceBoundRight - _params.SpaceBoundLeft) / _params.SpaceStepCount;
 			var tau = _params.TimeLimit / _params.TimeStepCount;
 
@@ -140,11 +144,45 @@ namespace NumericMethods.Core.PartialDiffEquation
 			var gamma = _conditions.SecondConditionParameters[0];
 			var delta = _conditions.SecondConditionParameters[1];
 
-			_grid[0, k] = -(alpha / h) / (betta - alpha / h) * _grid[1, k] +
-				_conditions.FirstFunc(0, GetTimeCoordinate(k)) / (betta - alpha / h);
-			_grid[_params.SpaceStepCount - 1, k] = (gamma / h) / (delta + gamma / h) * _grid[_params.SpaceStepCount - 2, k] +
-				_conditions.SecondFunc(0, GetTimeCoordinate(k)) / (delta + gamma / h);
+			var u = _grid;
+			var N = _params.SpaceStepCount - 1;
 
+			switch (_params.Approximation)
+			{
+				case Approximation.ThreeDotsSecondDegree:
+					var p = betta - 3 * alpha / (2 * h);
+					var g = 3 * gamma / 2 / h + delta;
+
+					_grid[0, k] = _conditions.FirstFunc(0, GetTimeCoordinate(k)) / p
+						- (4 * u[1, k] - u[2, k]) * alpha / (2 * h * p);
+
+					_grid[N, k] = _conditions.SecondFunc(0, GetTimeCoordinate(k)) / g
+						+ (4 * u[N - 1, k] - u[N - 2, k]) * gamma / (2 * h * g);
+
+					break;
+				case Approximation.TwoDotsFirstDegree:
+					_grid[0, k] = -(alpha / h) / (betta - alpha / h) * _grid[1, k] +
+						_conditions.FirstFunc(0, GetTimeCoordinate(k)) / (betta - alpha / h);
+
+					_grid[N, k] = (gamma / h) / (delta + gamma / h) * _grid[N - 1, k] +
+						_conditions.SecondFunc(0, GetTimeCoordinate(k)) / (delta + gamma / h);
+
+					break;
+				case Approximation.TwoDotsSecondDegree:
+					p = 2 * a - b * h;
+					g = -2 * a * alpha / (h * p) - h * alpha / (p * tau) + (c * h * alpha) / p + betta;
+					_grid[0, k] = (_conditions.FirstFunc(0, GetTimeCoordinate(k))
+						- alpha * 2 * a * u[1, k] / (h * p)
+						- h * alpha * u[0, k - 1] / (p * tau)) / g;
+
+					p = 2 * a + b * h;
+					g = 2 * a * gamma / (h * p) + h * gamma / (p * tau) - (c * h * gamma) / p + delta;
+					_grid[N, k] = (_conditions.SecondFunc(0, GetTimeCoordinate(k))
+						+ gamma * 2 * a * u[N - 1, k] / (h * p)
+						+ h * gamma * u[N, k - 1] / (p * tau)) / g;
+
+					break;
+			}
 		}
 
 		public double[,] FindError(Func<double, double, double> u)
