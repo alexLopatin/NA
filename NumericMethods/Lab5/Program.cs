@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using NumericMethods.Core;
+using NumericMethods.Core.Expressions;
+using NumericMethods.Core.Expressions.Helpers;
 using NumericMethods.Core.PartialDiffEquation;
 
 namespace Lab5
@@ -60,6 +62,18 @@ namespace Lab5
 				TimeStepCount = 9000,
 				Approximation = Approximation.TwoDotsSecondDegree
 			};
+
+			var expression = new Expression();
+			var variables = new List<Variable>()
+			{
+				new Variable("x", 0),
+				new Variable("t", 0)
+			};
+
+			expression.FromString("e^(-2*t)*sin(x)", variables);
+
+			var expFunc = expression.GetTwoDimensional();
+			Func<double, double, double> f = (x, t) => Math.Exp(-2 * t) * Math.Sin(x);
 
 			var method = new FiniteDifference(conditions, @params);
 
