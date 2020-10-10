@@ -1,16 +1,29 @@
 ﻿@page "/counter"
+@using NumericMethods.Core.Expressions;
 
 <h1>Counter</h1>
 
-<p>Current count: @currentCount</p>
+<p>Current count: @_expression.GetValue()</p>
 
 <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
 @code {
-    private int currentCount = 0;
+	private Expression _expression;
 
-    private void IncrementCount()
-    {
-        currentCount++;
-    }
+	private void IncrementCount()
+	{
+		_expression.Variables[0].Value++;
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		_expression = new Expression();
+		var variables = new List<Variable>()
+			{
+				new Variable("x", 0),
+				new Variable("t", 0)
+			};
+
+		_expression.FromString("e^(-2*t)*sin(x)", variables);
+	}
 }

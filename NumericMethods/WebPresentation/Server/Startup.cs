@@ -53,7 +53,7 @@ namespace WebPresentation.Server
 
 			app.UseAuthentication();
 
-			app.UseWhen(context => context.User.Identity.IsAuthenticated,
+			app.UseWhen(context => true,
 				builder => builder.UseBlazorFrameworkFiles());
 
 			app.UseStaticFiles();
@@ -66,7 +66,7 @@ namespace WebPresentation.Server
 			{
 				endpoints.MapRazorPages();
 				endpoints.MapControllers();
-				//endpoints.MapFallbackToFile("index.html");
+				endpoints.MapFallbackToFile("index.html");
 				//endpoints.MapFallbackToController("Index", "Auth");
 			});
 		}

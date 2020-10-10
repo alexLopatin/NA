@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Shared\WebPresentation.Shared.csproj" />
+    <ProjectReference Include="..\..\Core\NumericMethods.Core.csproj" />
   </ItemGroup>
 
 </Project>

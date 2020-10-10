@@ -11,10 +11,8 @@ using WebPresentation.Server.ReadModels;
 
 namespace WebPresentation.Server.Controllers
 {
-	[ApiController]
 	public class AuthController : ControllerBase
 	{
-		[HttpPost]
 		public async Task<ActionResult> Login([FromBody] LoginReadModel readModel)
 		{
 			var claims = new List<Claim>
