@@ -1,0 +1,43 @@
+﻿@page "/lab5"
+@using NumericMethods.Core.Expressions;
+@using NumericMethods.Core.Expressions.Helpers;
+
+<h3>Lab5</h3>
+
+<input @bind="RawExpression" />
+
+@code {
+	private readonly List<Variable> variables = new List<Variable>()
+{
+		new Variable("x", 0.0d),
+		new Variable("t", 0.0d)
+	};
+
+	private Expression expression = new Expression();
+
+	private string _rawExpression;
+	private string RawExpression
+	{
+		get
+		{
+			return _rawExpression;
+		}
+		set
+		{
+			try
+			{
+				expression.FromString(value, variables);
+				_rawExpression = value;
+			}
+			catch (Exception)
+			{
+				expression.FromString(_rawExpression, variables);
+			}
+		}
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		expression.FromString("0", variables);
+	}
+}
