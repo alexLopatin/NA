@@ -4,11 +4,6 @@ using System.Text;
 
 namespace NumericMethods.Core.PartialDiffEquation
 {
-	public enum Approximation
-	{
-		TwoDotsFirstDegree, TwoDotsSecondDegree, ThreeDotsSecondDegree
-	}
-
 	public class FiniteDifferenceParams
 	{
 		public double SpaceBoundLeft { get; set; }
@@ -17,7 +12,5 @@ namespace NumericMethods.Core.PartialDiffEquation
 
 		public int SpaceStepCount { get; set; }
 		public int TimeStepCount { get; set; }
-
-		public Approximation Approximation { get; set; } = Approximation.TwoDotsFirstDegree;
 	}
 }
