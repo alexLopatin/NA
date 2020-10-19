@@ -63,7 +63,7 @@ namespace Lab5
 				TimeStepCount = 90000
 			};
 
-			var method = new ParabolicExplicitFiniteDifference(conditions, @params);
+			var method = new CrankNikolsonMethod(conditions, @params);
 
 			var result = method.Solve(new[] { 1.0d, .0d, .0d }, (x, t) => Math.Cos(x) * (Math.Cos(t) + Math.Sin(t)));
 

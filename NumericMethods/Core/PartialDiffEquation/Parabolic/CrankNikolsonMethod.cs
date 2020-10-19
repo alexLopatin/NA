@@ -1,17 +1,18 @@
-﻿using System;
+﻿using NumericMethods.Core.LinearAlgebra;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace NumericMethods.Core.PartialDiffEquation.Parabolic
 {
 	public class CrankNikolsonMethod
 	{
-		private readonly ParabolicImplicitFiniteDifference _finiteDifference;
+		private readonly BoundaryConditionsThirdDegree _conditions;
 		private readonly FiniteDifferenceParams _params;
 
 		private readonly double _weight;
 
-		//govno
 		private double[,] _grid;
 
 		public CrankNikolsonMethod(
@@ -19,27 +20,123 @@ namespace NumericMethods.Core.PartialDiffEquation.Parabolic
 			FiniteDifferenceParams @params,
 			double weight = 0.5d)
 		{
-			_finiteDifference = new ParabolicImplicitFiniteDifference(conditions, @params);
+			_conditions = conditions;
 			_params = @params;
 			_weight = weight;
+
+			_grid = new double[_params.SpaceStepCount, _params.TimeStepCount];
+			InitializeGrid();
+		}
+
+		private void InitializeGrid()
+		{
+			for (int i = 0; i < _params.SpaceStepCount; i++)
+			{
+				var x = GetSpaceCoordinate(i);
+				_grid[i, 0] = _conditions.InitialFunc(x, 0);
+			}
 		}
 
 		public double[,] Solve(double[] coefs, Func<double, double, double> f)
 		{
-			var @explicit = _finiteDifference.Solve(coefs, f);
-			var @implicit = _finiteDifference.Solve(coefs, f);
+			var a = coefs[0];
+			var b = coefs[1];
+			var c = coefs[2];
 
-			_grid = @explicit.Clone() as double[,];
+			var h = (_params.SpaceBoundRight - _params.SpaceBoundLeft) / _params.SpaceStepCount;
+			var tau = _params.TimeLimit / _params.TimeStepCount;
 
-			for(int i = 0; i < _params.SpaceStepCount; i++)
+			var matrix = new Matrix(_params.SpaceStepCount, _params.SpaceStepCount);
+
+			for (int i = 0; i < _params.SpaceStepCount - 1; i++)
 			{
-				for (int j = 0; j < _params.TimeStepCount; j++)
+				matrix[i, i] = (2 * a / (h * h) - c) * _weight + 1 / tau;
+				matrix[i, i + 1] = -(a / (h * h) + b / (2 * h)) * _weight;
+				matrix[i + 1, i] = -(a / (h * h) - b / (2 * h)) * _weight;
+			}
+
+			for (int k = 1; k < _params.TimeStepCount; k++)
+			{
+				var d = SetBorderGrid(k, matrix, coefs, f);
+
+				var newLayer = matrix.SolveTridiagonal(d);
+
+				for (int i = 0; i < _params.SpaceStepCount; i++)
 				{
-					_grid[i, j] = _weight * @implicit[i, j] + (1 - _weight) * @explicit[i, j];
+					_grid[i, k] = newLayer[i];
 				}
 			}
 
-			return _grid;
+			return _grid.Clone() as double[,];
+		}
+
+		private double[] SetBorderGrid(int k, Matrix matrix, double[] coefs, Func<double, double, double> f)
+		{
+			var a = coefs[0];
+			var b = coefs[1];
+			var c = coefs[2];
+
+			var h = (_params.SpaceBoundRight - _params.SpaceBoundLeft) / _params.SpaceStepCount;
+			var tau = _params.TimeLimit / _params.TimeStepCount;
+
+			var alpha = _conditions.FirstConditionParameters[0];
+			var betta = _conditions.FirstConditionParameters[1];
+
+			var gamma = _conditions.SecondConditionParameters[0];
+			var delta = _conditions.SecondConditionParameters[1];
+
+			var N = _params.SpaceStepCount - 1;
+
+			var d = new double[_params.SpaceStepCount];
+
+			for (int j = 1; j < N; j++)
+			{
+				d[j] = _grid[j, k - 1] / tau
+					+ f(GetSpaceCoordinate(j), GetTimeCoordinate(k - 1))
+					+ GetExplicitPart(coefs, f, j, k);
+			}
+
+			d[0] = Math.Abs(alpha) > 1E-3
+				? h / tau * _grid[0, k - 1]
+					+ -_conditions.FirstFunc(0, GetTimeCoordinate(k)) * (2 * a - b * h) / alpha
+				: _conditions.FirstFunc(0, GetTimeCoordinate(k)) / betta;
+			d[N] = Math.Abs(gamma) > 1E-3
+				? h / tau * _grid[N, k - 1]
+					//+ GetExplicitPart(coefs, f, N - 1, k)
+					+ _conditions.SecondFunc(0, GetTimeCoordinate(k)) * (2 * a + b * h) / gamma
+				: _conditions.SecondFunc(0, GetTimeCoordinate(k)) / delta;
+
+			matrix[0, 0] = Math.Abs(alpha) > 1E-3
+				? (2 * a / h + h / tau - c * h - betta / alpha * (2 * a - b * h))
+				: 1;
+			matrix[0, 1] = Math.Abs(alpha) > 1E-3
+				? -2 * a / h
+				: 0;
+
+			matrix[N, N - 1] = Math.Abs(gamma) > 1E-3
+				? -2 * a / h
+				: 0;
+			matrix[N, N] = Math.Abs(gamma) > 1E-3
+				? (2 * a / h + h / tau - c * h + delta / gamma * (2 * a + b * h))
+				: 1;
+
+			return d;
+		}
+
+		private double GetExplicitPart(double[] coefs, Func<double, double, double> f, int j, int k)
+		{
+			var a = coefs[0];
+			var b = coefs[1];
+			var c = coefs[2];
+
+			var h = (_params.SpaceBoundRight - _params.SpaceBoundLeft) / _params.SpaceStepCount;
+			var tau = _params.TimeLimit / _params.TimeStepCount;
+
+			return ((a / (h * h)) * _grid[j + 1, k - 1]
+					+ -2 * (a / (h * h)) * _grid[j, k - 1]
+					+ (a / (h * h)) * _grid[j - 1, k - 1]
+					+ b * (_grid[j + 1, k - 1] - _grid[j - 1, k - 1]) / (2 * h)
+					+ c * _grid[j, k - 1]) * (1 - _weight);
 		}
 
 		private double GetSpaceCoordinate(int i)
