@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace NumericMethods.Core.PartialDiffEquation
+namespace NumericMethods.Core.PartialDiffEquation.Parabolic
 {
 	public class CrankNikolsonMethod
 	{
-		private readonly FiniteDifference _finiteDifference;
+		private readonly ParabolicImplicitFiniteDifference _finiteDifference;
 		private readonly FiniteDifferenceParams _params;
 
 		private readonly double _weight;
@@ -19,15 +19,15 @@ namespace NumericMethods.Core.PartialDiffEquation
 			FiniteDifferenceParams @params,
 			double weight = 0.5d)
 		{
-			_finiteDifference = new FiniteDifference(conditions, @params);
+			_finiteDifference = new ParabolicImplicitFiniteDifference(conditions, @params);
 			_params = @params;
 			_weight = weight;
 		}
 
 		public double[,] Solve(double[] coefs, Func<double, double, double> f)
 		{
-			var @explicit = _finiteDifference.SolveExplicit(coefs, f);
-			var @implicit = _finiteDifference.SolveImplicit(coefs, f);
+			var @explicit = _finiteDifference.Solve(coefs, f);
+			var @implicit = _finiteDifference.Solve(coefs, f);
 
 			_grid = @explicit.Clone() as double[,];
 

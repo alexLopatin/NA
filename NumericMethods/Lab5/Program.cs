@@ -5,6 +5,7 @@ using NumericMethods.Core;
 using NumericMethods.Core.Expressions;
 using NumericMethods.Core.Expressions.Helpers;
 using NumericMethods.Core.PartialDiffEquation;
+using NumericMethods.Core.PartialDiffEquation.Parabolic;
 
 namespace Lab5
 {
@@ -62,24 +63,9 @@ namespace Lab5
 				TimeStepCount = 90000
 			};
 
-			var expression = new Expression();
-			var variables = new List<Variable>()
-			{
-				new Variable("x", 0),
-				new Variable("t", 0)
-			};
+			var method = new ParabolicExplicitFiniteDifference(conditions, @params);
 
-			expression.FromString("e^(-2*t)*sin(x)", variables);
-
-			var expFunc = expression.GetTwoDimensional();
-			Func<double, double, double> f = (x, t) => Math.Exp(-2 * t) * Math.Sin(x);
-
-			var method = new FiniteDifference(conditions, @params);
-
-			//var result = method.SolveExplicit(new[] { 1.0d, .0d, .0d }, (x, t) => 0);
-			//var method = new CrankNikolsonMethod(conditions, @params);
-
-			var result = method.SolveExplicit(new[] { 1.0d, .0d, .0d }, (x, t) => Math.Cos(x) * (Math.Cos(t) + Math.Sin(t)));
+			var result = method.Solve(new[] { 1.0d, .0d, .0d }, (x, t) => Math.Cos(x) * (Math.Cos(t) + Math.Sin(t)));
 
 			var errors = method.FindError((x, t) => Math.Sin(t) * Math.Cos(x));
 

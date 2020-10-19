@@ -1,19 +1,15 @@
-﻿using NumericMethods.Core.LinearAlgebra;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System;
 
-namespace NumericMethods.Core.PartialDiffEquation
+namespace NumericMethods.Core.PartialDiffEquation.Parabolic
 {
-	public class FiniteDifference
+	public class ParabolicExplicitFiniteDifference
 	{
 		private readonly double[,] _grid;
 
 		private readonly BoundaryConditionsThirdDegree _conditions;
 		private readonly FiniteDifferenceParams _params;
 
-		public FiniteDifference(BoundaryConditionsThirdDegree conditions, FiniteDifferenceParams @params)
+		public ParabolicExplicitFiniteDifference(BoundaryConditionsThirdDegree conditions, FiniteDifferenceParams @params)
 		{
 			_params = @params;
 			_conditions = conditions;
@@ -40,7 +36,7 @@ namespace NumericMethods.Core.PartialDiffEquation
 			}
 		}
 
-		public double[,] SolveExplicit(double[] coefs, Func<double, double, double> f)
+		public double[,] Solve(double[] coefs, Func<double, double, double> f)
 		{
 			var a = coefs[0];
 			var b = coefs[1];
@@ -69,77 +65,6 @@ namespace NumericMethods.Core.PartialDiffEquation
 				}
 
 				SetBorderGrid(k);
-			}
-
-			return _grid.Clone() as double[,];
-		}
-
-		public double[,] SolveImplicit(double[] coefs, Func<double, double, double> f)
-		{
-			var a = coefs[0];
-			var b = coefs[1];
-			var c = coefs[2];
-
-			var h = (_params.SpaceBoundRight - _params.SpaceBoundLeft) / _params.SpaceStepCount;
-			var tau = _params.TimeLimit / _params.TimeStepCount;
-
-			var alpha = _conditions.FirstConditionParameters[0];
-			var betta = _conditions.FirstConditionParameters[1];
-
-			var gamma = _conditions.SecondConditionParameters[0];
-			var delta = _conditions.SecondConditionParameters[1];
-
-			double sigma = a * tau / (h * h);
-
-			Matrix matrix = new Matrix(_params.SpaceStepCount, _params.SpaceStepCount);
-
-			for (int i = 0; i < _params.SpaceStepCount - 1; i++)
-			{
-				matrix[i, i] = 2 * a / (h * h) + 1 / tau - c;
-				matrix[i, i + 1] = -(a / (h * h) + b / (2 * h));
-				matrix[i + 1, i] = - (a / (h * h) - b / (2* h));
-			}
-
-			var N = _params.SpaceStepCount - 1;
-
-			for (int k = 1; k < _params.TimeStepCount; k++)
-			{
-				var d = Enumerable
-					.Range(0, _params.SpaceStepCount)
-					.Select(i => _grid[i, k - 1] / tau + f(GetSpaceCoordinate(i), GetTimeCoordinate(k)))
-					.ToArray();
-
-				d[0] = Math.Abs(alpha) > 1E-3
-					? h / tau * _grid[0, k - 1]
-						+ -_conditions.FirstFunc(0, GetTimeCoordinate(k)) * (2 * a - b * h) / alpha
-						//+ f(GetSpaceCoordinate(0), GetTimeCoordinate(k)) * h
-					: _conditions.FirstFunc(0, GetTimeCoordinate(k)) / betta;
-				d[^1] = Math.Abs(gamma) > 1E-3
-					? h / tau * _grid[N, k - 1]
-						+ _conditions.SecondFunc(0, GetTimeCoordinate(k)) * (2 * a + b * h) / gamma
-						//+ f(GetSpaceCoordinate(N), GetTimeCoordinate(k)) * h
-					: _conditions.SecondFunc(0, GetTimeCoordinate(k)) / delta;
-
-				matrix[0, 0] = Math.Abs(alpha) > 1E-3
-					? 2 * a / h + h / tau - c * h - betta / alpha * (2 * a - b * h)
-					: 1;
-				matrix[0, 1] = Math.Abs(alpha) > 1E-3
-					? -2 * a / h
-					: 0;
-
-				matrix[N, N - 1] = Math.Abs(gamma) > 1E-3
-					? -2 * a / h
-					: 0;
-				matrix[N, N] = Math.Abs(gamma) > 1E-3
-					? 2 * a / h + h / tau - c * h + delta / gamma * (2 * a + b * h)
-					: 1;
-
-				var newLayer = matrix.SolveTridiagonal(d);
-
-				for(int i = 0; i < _params.SpaceStepCount; i++)
-				{
-					_grid[i, k] = newLayer[i];
-				}
 			}
 
 			return _grid.Clone() as double[,];
