@@ -63,7 +63,7 @@ namespace NumericMethods.Core.PartialDiffEquation
 					_grid[j, k] = sigma * _grid[j + 1, k - 1]
 						+ (1 - 2 * sigma) * _grid[j, k - 1]
 						+ sigma * _grid[j - 1, k - 1]
-						+ b * (_grid[j + 1, k - 1] - _grid[j, k - 1]) / h * tau
+						+ b * (_grid[j + 1, k - 1] - _grid[j - 1, k - 1]) / (2 * h) * tau
 						+ c * _grid[j, k - 1] * tau
 						+ f(GetSpaceCoordinate(j), GetTimeCoordinate(k - 1)) * tau;
 				}
@@ -95,28 +95,44 @@ namespace NumericMethods.Core.PartialDiffEquation
 
 			for (int i = 0; i < _params.SpaceStepCount - 1; i++)
 			{
-				matrix[i, i] = -1 - 2 * sigma;
-				matrix[i, i + 1] = sigma;
-				matrix[i + 1, i] = sigma;
+				matrix[i, i] = 2 * a / (h * h) + 1 / tau - c;
+				matrix[i, i + 1] = -(a / (h * h) + b / (2 * h));
+				matrix[i + 1, i] = - (a / (h * h) - b / (2* h));
 			}
 
 			var N = _params.SpaceStepCount - 1;
-
-			matrix[0, 0] = betta - alpha / h;
-			matrix[0, 1] = alpha / h;
-			matrix[N, N - 1] = -gamma / h;
-			matrix[N, N] = delta + gamma / h;
-
 
 			for (int k = 1; k < _params.TimeStepCount; k++)
 			{
 				var d = Enumerable
 					.Range(0, _params.SpaceStepCount)
-					.Select(i => - _grid[i, k - 1])
+					.Select(i => _grid[i, k - 1] / tau + f(GetSpaceCoordinate(i), GetTimeCoordinate(k)))
 					.ToArray();
 
-				d[0] = _conditions.FirstFunc(0, GetTimeCoordinate(k)) / (betta - alpha / h);
-				d[^1] = _conditions.SecondFunc(0, GetTimeCoordinate(k)) / (delta + gamma / h);
+				d[0] = Math.Abs(alpha) > 1E-3
+					? h / tau * _grid[0, k - 1]
+						+ -_conditions.FirstFunc(0, GetTimeCoordinate(k)) * (2 * a - b * h) / alpha
+						//+ f(GetSpaceCoordinate(0), GetTimeCoordinate(k)) * h
+					: _conditions.FirstFunc(0, GetTimeCoordinate(k)) / betta;
+				d[^1] = Math.Abs(gamma) > 1E-3
+					? h / tau * _grid[N, k - 1]
+						+ _conditions.SecondFunc(0, GetTimeCoordinate(k)) * (2 * a + b * h) / gamma
+						//+ f(GetSpaceCoordinate(N), GetTimeCoordinate(k)) * h
+					: _conditions.SecondFunc(0, GetTimeCoordinate(k)) / delta;
+
+				matrix[0, 0] = Math.Abs(alpha) > 1E-3
+					? 2 * a / h + h / tau - c * h - betta / alpha * (2 * a - b * h)
+					: 1;
+				matrix[0, 1] = Math.Abs(alpha) > 1E-3
+					? -2 * a / h
+					: 0;
+
+				matrix[N, N - 1] = Math.Abs(gamma) > 1E-3
+					? -2 * a / h
+					: 0;
+				matrix[N, N] = Math.Abs(gamma) > 1E-3
+					? 2 * a / h + h / tau - c * h + delta / gamma * (2 * a + b * h)
+					: 1;
 
 				var newLayer = matrix.SolveTridiagonal(d);
 
