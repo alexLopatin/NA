@@ -50,8 +50,9 @@ namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 			}
 		}
 
-		public double[,] Solve(double[] coefs, Func<double, double, double> f)
+		public double[,] Solve(double[] timeCoefs, double[] coefs, Func<double, double, double> f)
 		{
+			var g = timeCoefs[0];
 			var a = coefs[0];
 			var b = coefs[1];
 			var c = coefs[2];
@@ -70,11 +71,12 @@ namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 			{
 				for (int j = 1; j < _params.SpaceStepCount; j++)
 				{
-					_grid[j, k] =  _grid[j + 1, k - 1] * (sigma + b * tau * tau / (2 * h))
-						+ _grid[j, k - 1] * (-2 * sigma + 2 + c * tau * tau)
-						+ _grid[j - 1, k - 1] * (sigma - b * tau * tau / (2 * h))
-						- _grid[j, k - 2]
-						+ f(GetSpaceCoordinate(j), GetTimeCoordinate(k - 1)) * tau * tau;
+					_grid[j, k] = (_grid[j + 1, k - 1] * (a / (h * h) + b / (2 * h))
+						+ _grid[j, k - 1] * (-2 * a / (h * h) + 2 / (tau * tau) + c)
+						+ _grid[j - 1, k - 1] * (a / (h * h) - b / (2 * h))
+						+ _grid[j, k - 2] * (-1 / (tau * tau) + g / (2 * tau))
+						+ f(GetSpaceCoordinate(j), GetTimeCoordinate(k - 1)))
+							/ (1 / (tau * tau) + g / (2 * tau));
 				}
 
 				SetBorderGrid(k);

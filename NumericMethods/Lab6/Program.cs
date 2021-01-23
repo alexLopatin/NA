@@ -45,27 +45,27 @@ namespace Lab6
 			{
 				FirstConditionParameters = new[] { .0d, 1.0d },
 				SecondConditionParameters = new[] { .0d, 1.0d },
-				InitialCondition = (x, t) => Math.Sin(x),
-				DerivativeCondition = (x, t) => -Math.Cos(x),
-				FirstCondition = (x, t) => -Math.Sin(t),
-				SecondCondition = (x, t) => Math.Sin(t)
+				InitialCondition = (x, t) => Math.Cos(x) * Math.Exp(-x),
+				DerivativeCondition = (x, t) => -Math.Cos(x) * Math.Exp(-x),
+				FirstCondition = (x, t) => Math.Cos(2 * t) * Math.Exp(-t),
+				SecondCondition = (x, t) => 0
 			};
 
 			var @params = new FiniteDifferenceParams()
 			{
 				SpaceBoundLeft = 0,
-				SpaceBoundRight = Math.PI,
+				SpaceBoundRight = Math.PI / 2,
 				TimeLimit = 1d,
 				SpaceStepCount = 10,
 				TimeStepCount = 400,
 				ApproximationType = BoundaryApproximationType.FirstDegreeTwoPoints
 			};
 
-			var method = new HyperbolicImplicitFiniteDifference(conditions, @params);
+			var method = new HyperbolicExplicitFiniteDifference(conditions, @params);
 
-			var result = method.Solve(new[] { 1.0d, .0d, .0d }, (x, t) => 0);
+			var result = method.Solve(new[] { 2.0 }, new[] { 1.0d, 2.0d, -3.0d }, (x, t) => 0);
 
-			var errors = method.FindError((x, t) => Math.Sin(x - t));
+			var errors = method.FindError((x, t) => Math.Cos(x) * Math.Cos(2 * t) * Math.Exp(-x - t));
 
 			var maxError = FindMax(errors);
 			var median = FindMedian(errors);

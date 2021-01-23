@@ -52,8 +52,9 @@ namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 			}
 		}
 
-		public double[,] Solve(double[] coefs, Func<double, double, double> f)
+		public double[,] Solve(double[] timeCoefs, double[] coefs, Func<double, double, double> f)
 		{
+			var g = timeCoefs[0];
 			var a = coefs[0];
 			var b = coefs[1];
 			var c = coefs[2];
@@ -65,14 +66,14 @@ namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 
 			for (int i = 0; i < _params.SpaceStepCount; i++)
 			{
-				matrix[i, i] = 2 * a / (h * h) + 1 / (tau * tau) - c;
+				matrix[i, i] = 2 * a / (h * h) + 1 / (tau * tau) + g / (2 * tau) - c;
 				matrix[i, i + 1] = -(a / (h * h) + b / (2 * h));
 				matrix[i + 1, i] = -(a / (h * h) - b / (2 * h));
 			}
 
 			for (int k = 2; k <= _params.TimeStepCount; k++)
 			{
-				var d = SetBorderGrid(k, matrix, coefs, f);
+				var d = SetBorderGrid(k, matrix, timeCoefs, coefs, f);
 
 				var newLayer = matrix.SolveTridiagonal(d);
 
@@ -85,8 +86,9 @@ namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 			return _grid.Clone() as double[,];
 		}
 
-		private double[] SetBorderGrid(int k, Matrix matrix, double[] coefs, Func<double, double, double> f)
+		private double[] SetBorderGrid(int k, Matrix matrix, double[] timeCoefs, double[] coefs, Func<double, double, double> f)
 		{
+			var g = timeCoefs[0];
 			var a = coefs[0];
 			var b = coefs[1];
 			var c = coefs[2];
@@ -104,7 +106,7 @@ namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 
 			var d = Enumerable
 					.Range(0, _params.SpaceStepCount + 1)
-					.Select(i => (2 * _grid[i, k - 1] - _grid[i, k - 2]) / (tau * tau) + f(GetSpaceCoordinate(i), GetTimeCoordinate(k)))
+					.Select(i => (2 * _grid[i, k - 1] - _grid[i, k - 2]) / (tau * tau) + g * _grid[i, k - 2] / (2* tau) + f(GetSpaceCoordinate(i), GetTimeCoordinate(k)))
 					.ToArray();
 
 			d[0] = _conditions.FirstCondition(0, GetTimeCoordinate(k));
