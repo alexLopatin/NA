@@ -61,7 +61,7 @@ namespace Lab6
 				ApproximationType = BoundaryApproximationType.FirstDegreeTwoPoints
 			};
 
-			var method = new HyperbolicExplicitFiniteDifference(conditions, @params);
+			var method = new HyperbolicImplicitFiniteDifference(conditions, @params);
 
 			var result = method.Solve(new[] { 1.0d, .0d, .0d }, (x, t) => 0);
 
