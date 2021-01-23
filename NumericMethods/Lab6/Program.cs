@@ -1,13 +1,9 @@
-﻿using System;
+﻿using NumericMethods.Core.PartialDiffEquation;
+using NumericMethods.Core.PartialDiffEquation.Hyperbolic;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using NumericMethods.Core;
-using NumericMethods.Core.Expressions;
-using NumericMethods.Core.Expressions.Helpers;
-using NumericMethods.Core.PartialDiffEquation;
-using NumericMethods.Core.PartialDiffEquation.Parabolic;
 
-namespace Lab5
+namespace Lab6
 {
 	class Program
 	{
@@ -45,13 +41,14 @@ namespace Lab5
 
 		static void Main(string[] args)
 		{
-			var conditions = new ParabolicBoundaryConditions()
+			var conditions = new HyperbolicBoundaryConditions()
 			{
-				FirstConditionParameters = new[] { 1.0d, 1.0d },
-				SecondConditionParameters = new[] { 1.0d, 1.0d },
+				FirstConditionParameters = new[] { .0d, 1.0d },
+				SecondConditionParameters = new[] { .0d, 1.0d },
 				InitialCondition = (x, t) => Math.Sin(x),
-				FirstCondition = (x, t) => Math.Exp(-2 * t) * (Math.Sin(t) + Math.Cos(t)),
-				SecondCondition = (x, t) => -Math.Exp(-2 * t) * (Math.Sin(t) + Math.Cos(t))
+				DerivativeCondition = (x, t) => -Math.Cos(x),
+				FirstCondition = (x, t) => -Math.Sin(t),
+				SecondCondition = (x, t) => Math.Sin(t)
 			};
 
 			var @params = new FiniteDifferenceParams()
@@ -61,14 +58,14 @@ namespace Lab5
 				TimeLimit = 1d,
 				SpaceStepCount = 10,
 				TimeStepCount = 400,
-				ApproximationType = BoundaryApproximationType.SecondDegreeTwoPoints
+				ApproximationType = BoundaryApproximationType.FirstDegreeTwoPoints
 			};
 
-			var method = new CrankNikolsonMethod(conditions, @params, 0.5d);
+			var method = new HyperbolicExplicitFiniteDifference(conditions, @params);
 
-			var result = method.Solve(new[] { 1.0d, 1.0d, -1.0d }, (x, t) => 0);
+			var result = method.Solve(new[] { 1.0d, .0d, .0d }, (x, t) => 0);
 
-			var errors = method.FindError((x, t) => Math.Exp(-2 * t) * Math.Sin(x + t));
+			var errors = method.FindError((x, t) => Math.Sin(x - t));
 
 			var maxError = FindMax(errors);
 			var median = FindMedian(errors);

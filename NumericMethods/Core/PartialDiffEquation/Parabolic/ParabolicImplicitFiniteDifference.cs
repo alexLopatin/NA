@@ -10,10 +10,10 @@ namespace NumericMethods.Core.PartialDiffEquation.Parabolic
 	{
 		private readonly double[,] _grid;
 
-		private readonly BoundaryConditionsThirdDegree _conditions;
+		private readonly ParabolicBoundaryConditions _conditions;
 		private readonly FiniteDifferenceParams _params;
 
-		public ParabolicImplicitFiniteDifference(BoundaryConditionsThirdDegree conditions, FiniteDifferenceParams @params)
+		public ParabolicImplicitFiniteDifference(ParabolicBoundaryConditions conditions, FiniteDifferenceParams @params)
 		{
 			_params = @params;
 			_conditions = conditions;
@@ -36,7 +36,7 @@ namespace NumericMethods.Core.PartialDiffEquation.Parabolic
 			for (int i = 0; i < _params.SpaceStepCount; i++)
 			{
 				var x = GetSpaceCoordinate(i);
-				_grid[i, 0] = _conditions.InitialFunc(x, 0);
+				_grid[i, 0] = _conditions.InitialCondition(x, 0);
 			}
 		}
 
@@ -97,12 +97,12 @@ namespace NumericMethods.Core.PartialDiffEquation.Parabolic
 
 			d[0] = Math.Abs(alpha) > 1E-3
 				? h / tau * _grid[0, k - 1]
-					+ -_conditions.FirstFunc(0, GetTimeCoordinate(k)) * (2 * a - b * h) / alpha
-				: _conditions.FirstFunc(0, GetTimeCoordinate(k)) / betta;
+					+ -_conditions.FirstCondition(0, GetTimeCoordinate(k)) * (2 * a - b * h) / alpha
+				: _conditions.FirstCondition(0, GetTimeCoordinate(k)) / betta;
 			d[^1] = Math.Abs(gamma) > 1E-3
 				? h / tau * _grid[N, k - 1]
-					+ _conditions.SecondFunc(0, GetTimeCoordinate(k)) * (2 * a + b * h) / gamma
-				: _conditions.SecondFunc(0, GetTimeCoordinate(k)) / delta;
+					+ _conditions.SecondCondition(0, GetTimeCoordinate(k)) * (2 * a + b * h) / gamma
+				: _conditions.SecondCondition(0, GetTimeCoordinate(k)) / delta;
 
 			matrix[0, 0] = Math.Abs(alpha) > 1E-3
 				? 2 * a / h + h / tau - c * h - betta / alpha * (2 * a - b * h)

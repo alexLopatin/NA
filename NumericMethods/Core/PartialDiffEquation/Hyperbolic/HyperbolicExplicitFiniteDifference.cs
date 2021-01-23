@@ -1,19 +1,19 @@
 ﻿using System;
 
-namespace NumericMethods.Core.PartialDiffEquation.Parabolic
+namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 {
-	public class ParabolicExplicitFiniteDifference
+	public class HyperbolicExplicitFiniteDifference
 	{
 		private readonly double[,] _grid;
 
-		private readonly ParabolicBoundaryConditions _conditions;
+		private readonly HyperbolicBoundaryConditions _conditions;
 		private readonly FiniteDifferenceParams _params;
 
-		public ParabolicExplicitFiniteDifference(ParabolicBoundaryConditions conditions, FiniteDifferenceParams @params)
+		public HyperbolicExplicitFiniteDifference(HyperbolicBoundaryConditions conditions, FiniteDifferenceParams @params)
 		{
 			_params = @params;
 			_conditions = conditions;
-			_grid = new double[_params.SpaceStepCount, _params.TimeStepCount];
+			_grid = new double[_params.SpaceStepCount + 1, _params.TimeStepCount + 1];
 			InitializeGrid();
 		}
 
@@ -29,10 +29,24 @@ namespace NumericMethods.Core.PartialDiffEquation.Parabolic
 
 		private void InitializeGrid()
 		{
-			for (int i = 0; i < _params.SpaceStepCount; i++)
+			var tau = _params.TimeLimit / _params.TimeStepCount;
+			var p1 = _conditions.InitialCondition;
+			var p2 = _conditions.DerivativeCondition;
+
+			for (int i = 0; i <= _params.SpaceStepCount; i++)
 			{
 				var x = GetSpaceCoordinate(i);
-				_grid[i, 0] = _conditions.InitialCondition(x, 0);
+				_grid[i, 0] = p1(x, 0);
+
+				switch(_conditions.InitialApproximation)
+				{
+					case InitialApproximationType.FirstDegree:
+						_grid[i, 1] = p1(x, 0) + p2(x, 0) * tau;
+						break;
+					case InitialApproximationType.SecondDegree:
+						_grid[i, 1] = p1(x, 0) + p2(x, 0) * tau;
+						break;
+				}
 			}
 		}
 
@@ -45,23 +59,22 @@ namespace NumericMethods.Core.PartialDiffEquation.Parabolic
 			var h = (_params.SpaceBoundRight - _params.SpaceBoundLeft) / _params.SpaceStepCount;
 			var tau = _params.TimeLimit / _params.TimeStepCount;
 
-			double sigma = a * tau / (h * h);
+			double sigma = a * tau * tau / (h * h);
 
-			if (sigma > 0.5d)
+			if (sigma > 1.0d)
 			{
-				throw new ArgumentException("σ должен быть меньше 0.5");
+				throw new ArgumentException("σ должен быть меньше 1.0");
 			}
 
-			for (int k = 1; k < _params.TimeStepCount; k++)
+			for (int k = 2; k <= _params.TimeStepCount; k++)
 			{
-				for (int j = 1; j < _params.SpaceStepCount - 1; j++)
+				for (int j = 1; j < _params.SpaceStepCount; j++)
 				{
-					_grid[j, k] = sigma * _grid[j + 1, k - 1]
-						+ (1 - 2 * sigma) * _grid[j, k - 1]
-						+ sigma * _grid[j - 1, k - 1]
-						+ b * (_grid[j + 1, k - 1] - _grid[j - 1, k - 1]) / (2 * h) * tau
-						+ c * _grid[j, k - 1] * tau
-						+ f(GetSpaceCoordinate(j), GetTimeCoordinate(k - 1)) * tau;
+					_grid[j, k] =  _grid[j + 1, k - 1] * (sigma + b * tau * tau / (2 * h))
+						+ _grid[j, k - 1] * (-2 * sigma + 2 + c * tau * tau)
+						+ _grid[j - 1, k - 1] * (sigma - b * tau * tau / (2 * h))
+						- _grid[j, k - 2]
+						+ f(GetSpaceCoordinate(j), GetTimeCoordinate(k - 1)) * tau * tau;
 				}
 
 				SetBorderGrid(k);
@@ -83,18 +96,18 @@ namespace NumericMethods.Core.PartialDiffEquation.Parabolic
 
 			_grid[0, k] = -(alpha / h) / (betta - alpha / h) * _grid[1, k] +
 				_conditions.FirstCondition(0, GetTimeCoordinate(k)) / (betta - alpha / h);
-			_grid[_params.SpaceStepCount - 1, k] = (gamma / h) / (delta + gamma / h) * _grid[_params.SpaceStepCount - 2, k] +
+			_grid[0, k] = _conditions.FirstCondition(0, GetTimeCoordinate(k));
+			_grid[_params.SpaceStepCount, k] = (gamma / h) / (delta + gamma / h) * _grid[_params.SpaceStepCount - 2, k] +
 				_conditions.SecondCondition(0, GetTimeCoordinate(k)) / (delta + gamma / h);
-
 		}
 
 		public double[,] FindError(Func<double, double, double> u)
 		{
 			var errors = _grid.Clone() as double[,];
 
-			for (int k = 0; k < _params.TimeStepCount; k++)
+			for (int k = 0; k <= _params.TimeStepCount; k++)
 			{
-				for (int j = 0; j < _params.SpaceStepCount; j++)
+				for (int j = 0; j <= _params.SpaceStepCount; j++)
 				{
 					errors[j, k] = Math.Abs(_grid[j, k] - u(GetSpaceCoordinate(j), GetTimeCoordinate(k)));
 				}

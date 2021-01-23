@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30225.117
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NumericMethods.Lab5", "Lab5\NumericMethods.Lab5.csproj", "{02451A29-601A-4D53-B5C5-3E932650DDF1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NumericMethods.Lab5", "Lab5\NumericMethods.Lab5.csproj", "{02451A29-601A-4D53-B5C5-3E932650DDF1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NumericMethods.Core", "Core\NumericMethods.Core.csproj", "{6A36AEE3-6B02-4539-9FE2-05010D001E46}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NumericMethods.Core", "Core\NumericMethods.Core.csproj", "{6A36AEE3-6B02-4539-9FE2-05010D001E46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NumericMethods.Lab6", "Lab6\NumericMethods.Lab6.csproj", "{0F1C2BE1-8CB3-4DCC-B446-CB596BB96BFD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{6A36AEE3-6B02-4539-9FE2-05010D001E46}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6A36AEE3-6B02-4539-9FE2-05010D001E46}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6A36AEE3-6B02-4539-9FE2-05010D001E46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F1C2BE1-8CB3-4DCC-B446-CB596BB96BFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F1C2BE1-8CB3-4DCC-B446-CB596BB96BFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F1C2BE1-8CB3-4DCC-B446-CB596BB96BFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F1C2BE1-8CB3-4DCC-B446-CB596BB96BFD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

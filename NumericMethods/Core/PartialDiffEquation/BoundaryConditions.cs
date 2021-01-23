@@ -4,13 +4,14 @@ using System.Text;
 
 namespace NumericMethods.Core.PartialDiffEquation
 {
-	public class BoundaryConditionsThirdDegree
+	public class BoundaryConditions
 	{
 		public double[] FirstConditionParameters { get; set; } = Array.Empty<double>();
 		public double[] SecondConditionParameters { get; set; } = Array.Empty<double>();
 
-		public Func<double, double, double> FirstFunc { get; set; }
-		public Func<double, double, double> SecondFunc { get; set; }
-		public Func<double, double, double> InitialFunc { get; set; }
+		public Func<double, double, double> FirstCondition { get; set; }
+		public Func<double, double, double> SecondCondition { get; set; }
+
+		public Func<double, double, double> InitialCondition { get; set; }
 	}
 }
