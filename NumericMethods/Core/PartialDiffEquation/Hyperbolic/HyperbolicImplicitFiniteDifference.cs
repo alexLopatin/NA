@@ -9,9 +9,9 @@ namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 		private readonly double[,] _grid;
 
 		private readonly HyperbolicBoundaryConditions _conditions;
-		private readonly FiniteDifferenceParams _params;
+		private readonly HyperbolicFiniteDifferenceParams _params;
 
-		public HyperbolicImplicitFiniteDifference(HyperbolicBoundaryConditions conditions, FiniteDifferenceParams @params)
+		public HyperbolicImplicitFiniteDifference(HyperbolicBoundaryConditions conditions, HyperbolicFiniteDifferenceParams @params)
 		{
 			_params = @params;
 			_conditions = conditions;
@@ -40,7 +40,7 @@ namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 				var x = GetSpaceCoordinate(i);
 				_grid[i, 0] = p1(x, 0);
 
-				switch(_conditions.InitialApproximation)
+				switch(_params.InitialApproximation)
 				{
 					case InitialApproximationType.FirstDegree:
 						_grid[i, 1] = p1(x, 0) + p2(x, 0) * tau;

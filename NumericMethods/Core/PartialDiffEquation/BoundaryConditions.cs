@@ -13,6 +13,5 @@ namespace NumericMethods.Core.PartialDiffEquation
 		public Func<double, double, double> SecondCondition { get; set; }
 
 		public Func<double, double, double> InitialCondition { get; set; }
-		public BoundaryApproximationType BoundaryApproximation { get; set; }
 	}
 }

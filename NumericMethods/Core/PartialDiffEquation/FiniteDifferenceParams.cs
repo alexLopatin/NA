@@ -13,6 +13,6 @@ namespace NumericMethods.Core.PartialDiffEquation
 		public int SpaceStepCount { get; set; }
 		public int TimeStepCount { get; set; }
 
-		public BoundaryApproximationType ApproximationType { get; set; }
+		public BoundaryApproximationType BoundaryApproximation { get; set; }
 	}
 }

@@ -72,7 +72,7 @@ namespace NumericMethods.Core.PartialDiffEquation.Parabolic
 
 		private double[] SetBorderGrid(int k, Matrix matrix, double[] coefs, Func<double, double, double> f)
 		{
-			switch (_params.ApproximationType)
+			switch (_params.BoundaryApproximation)
 			{
 				case BoundaryApproximationType.FirstDegreeTwoPoints:
 					return ApproximateFirstDegreeTwoPoints(k, matrix, coefs, f);

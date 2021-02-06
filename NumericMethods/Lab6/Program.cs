@@ -49,23 +49,29 @@ namespace Lab6
 				DerivativeCondition = (x, t) => 0,
 				FirstCondition = (x, t) => 0,
 				SecondCondition = (x, t) => 0,
-				InitialApproximation = InitialApproximationType.SecondDegree,
-				BoundaryApproximation = BoundaryApproximationType.SecondDegreeTwoPoints
 			};
-
-			var @params = new FiniteDifferenceParams()
+			var equation = new HyperbolicEquationParams()
+			{
+				a = 1.0d,
+				b = .0d,
+				c = -5.0d,
+				d = .0d,
+				f = (x, t) => 0
+			};
+			var @params = new HyperbolicFiniteDifferenceParams()
 			{
 				SpaceBoundLeft = 0,
 				SpaceBoundRight = 1d,
 				TimeLimit = 1d,
-				SpaceStepCount = 40,
+				SpaceStepCount = 400,
 				TimeStepCount = 1000,
-				ApproximationType = BoundaryApproximationType.FirstDegreeTwoPoints
+				InitialApproximation = InitialApproximationType.SecondDegree,
+				BoundaryApproximation = BoundaryApproximationType.SecondDegreeThreePoints
 			};
 
-			var method = new HyperbolicExplicitFiniteDifference(conditions, @params);
+			var method = new HyperbolicExplicitFiniteDifference(conditions, equation, @params);
 
-			var result = method.Solve(new[] { .0 }, new[] { 1.0d, .0d, -5.0d }, (x, t) => 0);
+			var result = method.Solve();
 
 			var errors = method.FindError((x, t) => Math.Cos(t) * Math.Exp(2 * x));
 
