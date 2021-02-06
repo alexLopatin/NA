@@ -32,19 +32,23 @@ namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 			var tau = _params.TimeLimit / _params.TimeStepCount;
 			var p1 = _conditions.InitialCondition;
 			var p2 = _conditions.DerivativeCondition;
+			Func<int, int, double> f = (x, t) => Math.Cos(GetTimeCoordinate(t)) * Math.Exp(2 * GetSpaceCoordinate(x));
+
 
 			for (int i = 0; i <= _params.SpaceStepCount; i++)
 			{
 				var x = GetSpaceCoordinate(i);
-				_grid[i, 0] = p1(x, 0);
+				//_grid[i, 0] = p1(x, 0);
+				_grid[i, 0] = f(i, 0);
 
-				switch(_conditions.InitialApproximation)
+				switch (_conditions.InitialApproximation)
 				{
 					case InitialApproximationType.FirstDegree:
 						_grid[i, 1] = p1(x, 0) + p2(x, 0) * tau;
 						break;
 					case InitialApproximationType.SecondDegree:
-						_grid[i, 1] = p1(x, 0) + p2(x, 0) * tau;
+						//_grid[i, 1] = p1(x, 0) + p2(x, 0) * tau - Math.Sin(x) * tau * tau / 2;
+						_grid[i, 1] = f(i, 1);
 						break;
 				}
 			}
@@ -60,7 +64,7 @@ namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 			var h = (_params.SpaceBoundRight - _params.SpaceBoundLeft) / _params.SpaceStepCount;
 			var tau = _params.TimeLimit / _params.TimeStepCount;
 
-			double sigma = a * tau * tau / (h * h);
+			var sigma = a * tau * tau / (h * h);
 
 			if (sigma > 1.0d)
 			{
@@ -79,14 +83,19 @@ namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 							/ (1 / (tau * tau) + g / (2 * tau));
 				}
 
-				SetBorderGrid(k);
+				SetBorderGrid(timeCoefs, coefs, f, k);
 			}
 
 			return _grid.Clone() as double[,];
 		}
 
-		private void SetBorderGrid(int k)
+		private void SetBorderGrid(double[] timeCoefs, double[] coefs, Func<double, double, double> f, int k)
 		{
+			var d = timeCoefs[0];
+			var a = coefs[0];
+			var b = coefs[1];
+			var c = coefs[2];
+
 			var h = (_params.SpaceBoundRight - _params.SpaceBoundLeft) / _params.SpaceStepCount;
 			var tau = _params.TimeLimit / _params.TimeStepCount;
 
@@ -96,11 +105,42 @@ namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 			var gamma = _conditions.SecondConditionParameters[0];
 			var delta = _conditions.SecondConditionParameters[1];
 
-			_grid[0, k] = -(alpha / h) / (betta - alpha / h) * _grid[1, k] +
-				_conditions.FirstCondition(0, GetTimeCoordinate(k)) / (betta - alpha / h);
-			_grid[0, k] = _conditions.FirstCondition(0, GetTimeCoordinate(k));
-			_grid[_params.SpaceStepCount, k] = (gamma / h) / (delta + gamma / h) * _grid[_params.SpaceStepCount - 2, k] +
-				_conditions.SecondCondition(0, GetTimeCoordinate(k)) / (delta + gamma / h);
+			var f0 = _conditions.FirstCondition(0, GetTimeCoordinate(k));
+			var fn = _conditions.SecondCondition(0, GetTimeCoordinate(k));
+
+			switch (_conditions.BoundaryApproximation)
+			{
+				case BoundaryApproximationType.FirstDegreeTwoPoints:
+					_grid[0, k] = -(alpha / h) / (betta - alpha / h) * _grid[1, k] +
+						f0 / (betta - alpha / h);
+					_grid[_params.SpaceStepCount, k] = (gamma / h) / (delta + gamma / h) * _grid[_params.SpaceStepCount - 1, k] +
+						fn / (delta + gamma / h);
+					break;
+				case BoundaryApproximationType.SecondDegreeThreePoints:
+					_grid[0, k] = 1 / (- 3 * alpha / (2 * h) + betta) *
+						(f0 + alpha / (2 * h) * (_grid[2, k] - 4 * _grid[1, k]));
+					_grid[_params.SpaceStepCount, k] = 1 / (3 * gamma / (2 * h) + delta) *
+						(fn + gamma / (2 * h) * (4 * _grid[_params.SpaceStepCount - 1, k] - _grid[_params.SpaceStepCount - 2, k]));
+					break;
+				case BoundaryApproximationType.SecondDegreeTwoPoints:
+					var lam0 = (-2 * a / h - h / (tau * tau) - d * h / tau + c * h) / (2 * a - b * h);
+					var ro0 = (2 * a * _grid[1, k] / h
+						- h / (tau * tau) * (_grid[0, k - 2] - 2 * _grid[0, k - 1])
+						+ d * h * _grid[0, k - 1] / tau
+						+ f(0, GetTimeCoordinate(k)) * h)
+						/ (2 * a - b * h);
+
+					var lam1 = (2 * a / h + h / (tau * tau) + d * h / tau - c * h) / (2 * a + b * h);
+					var ro1 = (-2 * a * _grid[_params.SpaceStepCount - 1, k] / h
+						+ h / (tau * tau) * (_grid[_params.SpaceStepCount, k - 2] - 2 * _grid[_params.SpaceStepCount, k - 1])
+						- d * h * _grid[_params.SpaceStepCount, k - 1] / tau
+						+ f(GetSpaceCoordinate(_params.SpaceStepCount), GetTimeCoordinate(k)) * h)
+						/ (2 * a + b * h);
+
+					_grid[0, k] = (f0 - alpha * ro0) / (alpha * lam0 + betta);
+					_grid[_params.SpaceStepCount, k] = (fn - gamma * ro1) / (gamma * lam1 + delta);
+					break;
+			}
 		}
 
 		public double[,] FindError(Func<double, double, double> u)

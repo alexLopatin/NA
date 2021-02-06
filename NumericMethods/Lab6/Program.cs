@@ -43,29 +43,31 @@ namespace Lab6
 		{
 			var conditions = new HyperbolicBoundaryConditions()
 			{
-				FirstConditionParameters = new[] { .0d, 1.0d },
-				SecondConditionParameters = new[] { .0d, 1.0d },
-				InitialCondition = (x, t) => Math.Cos(x) * Math.Exp(-x),
-				DerivativeCondition = (x, t) => -Math.Cos(x) * Math.Exp(-x),
-				FirstCondition = (x, t) => Math.Cos(2 * t) * Math.Exp(-t),
-				SecondCondition = (x, t) => 0
+				FirstConditionParameters = new[] { 1.0d, -2.0d },
+				SecondConditionParameters = new[] { 1.0d, -2.0d },
+				InitialCondition = (x, t) => Math.Exp(2 * x),
+				DerivativeCondition = (x, t) => 0,
+				FirstCondition = (x, t) => 0,
+				SecondCondition = (x, t) => 0,
+				InitialApproximation = InitialApproximationType.SecondDegree,
+				BoundaryApproximation = BoundaryApproximationType.SecondDegreeTwoPoints
 			};
 
 			var @params = new FiniteDifferenceParams()
 			{
 				SpaceBoundLeft = 0,
-				SpaceBoundRight = Math.PI / 2,
+				SpaceBoundRight = 1d,
 				TimeLimit = 1d,
-				SpaceStepCount = 10,
-				TimeStepCount = 400,
+				SpaceStepCount = 40,
+				TimeStepCount = 1000,
 				ApproximationType = BoundaryApproximationType.FirstDegreeTwoPoints
 			};
 
 			var method = new HyperbolicExplicitFiniteDifference(conditions, @params);
 
-			var result = method.Solve(new[] { 2.0 }, new[] { 1.0d, 2.0d, -3.0d }, (x, t) => 0);
+			var result = method.Solve(new[] { .0 }, new[] { 1.0d, .0d, -5.0d }, (x, t) => 0);
 
-			var errors = method.FindError((x, t) => Math.Cos(x) * Math.Cos(2 * t) * Math.Exp(-x - t));
+			var errors = method.FindError((x, t) => Math.Cos(t) * Math.Exp(2 * x));
 
 			var maxError = FindMax(errors);
 			var median = FindMedian(errors);
