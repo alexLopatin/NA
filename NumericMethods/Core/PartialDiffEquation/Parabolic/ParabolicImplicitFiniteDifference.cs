@@ -1,8 +1,6 @@
-﻿using NumericMethods.Core.LinearAlgebra;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Text;
+using NumericMethods.Core.LinearAlgebra;
 
 namespace NumericMethods.Core.PartialDiffEquation.Parabolic
 {

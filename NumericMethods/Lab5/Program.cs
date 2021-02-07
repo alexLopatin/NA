@@ -53,20 +53,26 @@ namespace Lab5
 				FirstCondition = (x, t) => Math.Exp(-2 * t) * (Math.Sin(t) + Math.Cos(t)),
 				SecondCondition = (x, t) => -Math.Exp(-2 * t) * (Math.Sin(t) + Math.Cos(t))
 			};
-
-			var @params = new FiniteDifferenceParams()
+			var equation = new ParabolicEquationParams()
+			{
+				a = 1.0d,
+				b = 1.0d,
+				c = -1.0d,
+				f = (x, t) => 0
+			};
+			var @params = new ParabolicFiniteDifferenceParams()
 			{
 				SpaceBoundLeft = 0,
 				SpaceBoundRight = Math.PI,
 				TimeLimit = 1d,
-				SpaceStepCount = 10,
+				SpaceStepCount = 20,
 				TimeStepCount = 400,
-				ApproximationType = BoundaryApproximationType.SecondDegreeTwoPoints
+				BoundaryApproximation = BoundaryApproximationType.SecondDegreeThreePoints
 			};
 
-			var method = new CrankNikolsonMethod(conditions, @params, 0.5d);
+			var method = new ParabolicExplicitFiniteDifference(conditions, equation, @params);
 
-			var result = method.Solve(new[] { 1.0d, 1.0d, -1.0d }, (x, t) => 0);
+			var result = method.Solve();
 
 			var errors = method.FindError((x, t) => Math.Exp(-2 * t) * Math.Sin(x + t));
 

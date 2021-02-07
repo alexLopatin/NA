@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
+﻿namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 {
 	public enum InitialApproximationType
 	{
