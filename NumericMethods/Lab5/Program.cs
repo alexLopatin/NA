@@ -67,10 +67,10 @@ namespace Lab5
 				TimeLimit = 1d,
 				SpaceStepCount = 20,
 				TimeStepCount = 400,
-				BoundaryApproximation = BoundaryApproximationType.FirstDegreeTwoPoints
+				BoundaryApproximation = BoundaryApproximationType.SecondDegreeTwoPoints
 			};
 
-			var method = new ParabolicImplicitFiniteDifference(conditions, equation, @params);
+			var method = new CrankNikolsonMethod(conditions, equation, @params);
 
 			var result = method.Solve();
 
