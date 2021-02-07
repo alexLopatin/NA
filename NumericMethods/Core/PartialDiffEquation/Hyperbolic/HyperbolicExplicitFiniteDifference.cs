@@ -1,5 +1,5 @@
-﻿using NumericMethods.Core.Numerics;
-using System;
+﻿using System;
+using NumericMethods.Core.Numerics;
 
 namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 {
@@ -11,7 +11,10 @@ namespace NumericMethods.Core.PartialDiffEquation.Hyperbolic
 		private readonly HyperbolicFiniteDifferenceParams _params;
 		private readonly HyperbolicEquationParams _equation;
 
-		public HyperbolicExplicitFiniteDifference(HyperbolicBoundaryConditions conditions, HyperbolicEquationParams equation, HyperbolicFiniteDifferenceParams @params)
+		public HyperbolicExplicitFiniteDifference(
+			HyperbolicBoundaryConditions conditions,
+			HyperbolicEquationParams equation,
+			HyperbolicFiniteDifferenceParams @params)
 		{
 			_params = @params;
 			_conditions = conditions;

@@ -69,7 +69,7 @@ namespace Lab6
 				BoundaryApproximation = BoundaryApproximationType.SecondDegreeThreePoints
 			};
 
-			var method = new HyperbolicExplicitFiniteDifference(conditions, equation, @params);
+			var method = new HyperbolicImplicitFiniteDifference(conditions, equation, @params);
 
 			var result = method.Solve();
 
