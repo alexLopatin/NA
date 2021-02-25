@@ -70,6 +70,15 @@ namespace Lab5
 				BoundaryApproximation = BoundaryApproximationType.SecondDegreeTwoPoints
 			};
 
+
+			var exp = new Expression();
+			var varList = new List<Variable>()
+			{
+				new Variable("x", 2),
+				new Variable("y", Math.E)
+			};
+			exp.FromString("(x^2 + 6 * e^y) / (3 - 8 / (2* y))", varList);
+			Console.WriteLine(exp.GetValue());
 			var method = new CrankNikolsonMethod(conditions, equation, @params);
 
 			var result = method.Solve();

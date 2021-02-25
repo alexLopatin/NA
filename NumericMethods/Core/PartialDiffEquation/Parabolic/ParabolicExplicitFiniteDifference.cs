@@ -126,7 +126,7 @@ namespace NumericMethods.Core.PartialDiffEquation.Parabolic
 					break;
 			}
 
-			Func<double, double, double> f = (x, t) => Math.Exp(-2 * t) * Math.Sin(x + t);
+			//Func<double, double, double> f = (x, t) => Math.Exp(-2 * t) * Math.Sin(x + t);
 
 			//_grid[0, k] = f(0, GetTimeCoordinate(k));
 			//_grid[_params.SpaceStepCount, k] = f(GetSpaceCoordinate(_params.SpaceStepCount), GetTimeCoordinate(k));

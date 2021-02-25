@@ -1,9 +1,9 @@
 ﻿using NumericMethods.Core.PartialDiffEquation;
-using NumericMethods.Core.PartialDiffEquation.Hyperbolic;
+using NumericMethods.Core.PartialDiffEquation.Elliptical;
 using System;
 using System.Collections.Generic;
 
-namespace Lab6
+namespace Lab7
 {
 	class Program
 	{
@@ -41,39 +41,42 @@ namespace Lab6
 
 		static void Main(string[] args)
 		{
-			var conditions = new HyperbolicBoundaryConditions()
+			var conditions = new EllipticalBoundaryConditions()
 			{
-				FirstConditionParameters = new[] { 1.0d, -2.0d },
-				SecondConditionParameters = new[] { 1.0d, -2.0d },
-				InitialCondition = (x, t) => Math.Exp(2 * x),
-				DerivativeCondition = (x, t) => 0,
-				FirstCondition = (x, t) => 0,
-				SecondCondition = (x, t) => 0,
+				ConditionParameters = new double[4,2] { { 1, 0 }, { 1, -1 }, { 0, 1 }, { 0, 1 } },
+				InitialConditions = new Func<double, double, double>[4]
+				{
+					(x, y) => Math.Cos(y),
+					(x, y) => 0,
+					(x, y) => x,
+					(x, y) => 0
+				}
 			};
-			var equation = new HyperbolicEquationParams()
+			var equation = new EllipticalEquationParams()
 			{
-				a = 1.0d,
+				a = .0d,
 				b = .0d,
-				c = -5.0d,
-				d = .0d,
+				c = -1.0d,
 				f = (x, t) => 0
 			};
-			var @params = new HyperbolicFiniteDifferenceParams()
+			var @params = new EllipticalFiniteDifferenceParams()
 			{
-				SpaceBoundLeft = 0,
-				SpaceBoundRight = 1d,
-				TimeLimit = 1d,
-				SpaceStepCount = 200,
-				TimeStepCount = 600,
-				InitialApproximation = InitialApproximationType.FirstDegree,
+				XBoundLeft = 0,
+				XBoundRight = 1d,
+				YBoundLeft = 0,
+				YBoundRight = Math.PI / 2,
+				XStepCount = 15,
+				YStepCount = 15,
+				Solver = SolverType.Libman,
+				Eps = 0.0001d,
 				BoundaryApproximation = BoundaryApproximationType.SecondDegreeThreePoints
 			};
 
-			var method = new HyperbolicExplicitFiniteDifference(conditions, equation, @params);
+			var method = new EllipticalFiniteDifference(conditions, equation, @params);
 
 			var result = method.Solve();
 
-			var errors = method.FindError((x, t) => Math.Cos(t) * Math.Exp(2 * x));
+			var errors = method.FindError((x, y) => x * Math.Cos(y));
 
 			var maxError = FindMax(errors);
 			var median = FindMedian(errors);

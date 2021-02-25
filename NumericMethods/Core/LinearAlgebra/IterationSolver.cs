@@ -4,7 +4,7 @@ using System.Text;
 
 namespace NumericMethods.Core.LinearAlgebra
 {
-	class IterationSolver
+	public class IterationSolver
 	{
 		Matrix alpha;
 		Matrix betta;
@@ -41,12 +41,13 @@ namespace NumericMethods.Core.LinearAlgebra
 			{
 				var xNext = new Matrix(betta);
 				xNext += alpha * X;
-				double epsK = alpha.Norm() / (1 - alpha.Norm()) * Distance(X, xNext);
+				double epsK = Distance(X, xNext);
 				if (epsK < eps)
 					break;
 				X = xNext;
 			}
 		}
+
 		public void ZeidelSolve()
 		{
 			var B = alpha.LowTriangal();
@@ -57,7 +58,31 @@ namespace NumericMethods.Core.LinearAlgebra
 			{
 				var xNext = firstMat * X;
 				xNext += secondMat;
-				double epsK = C.Norm() / (1 - alpha.Norm()) * Distance(X, xNext);
+				double epsK = Distance(X, xNext);
+				if (epsK < eps)
+					break;
+				X = xNext;
+			}
+		}
+
+		public void OverRelaxation(double w = 1)
+		{
+			var B = w * alpha.LowTriangal();
+			var C = w * alpha.UpTriangal();
+
+			for (int i = 0; i < B.Columns; i++)
+			{
+				B[i, i] = alpha[i, i];
+				C[i, i] = (1 - w) * alpha[i, i];
+			}
+
+			var firstMat = (Matrix.Identity(alpha.Rows) - B).Inverse() * C;
+			var secondMat = (Matrix.Identity(alpha.Rows) - B).Inverse() * betta * w;
+			while (true)
+			{
+				var xNext = firstMat * X;
+				xNext += secondMat;
+				double epsK = Distance(X, xNext);
 				if (epsK < eps)
 					break;
 				X = xNext;
