@@ -65,11 +65,10 @@ namespace Lab7
 				XBoundRight = Math.PI,
 				YBoundLeft = 0,
 				YBoundRight = 1d,
-				XStepCount = 10,
-				YStepCount = 10,
-				Solver = SolverType.Libman,
-				Eps = 0.00001d,
-				BoundaryApproximation = BoundaryApproximationType.FirstDegreeTwoPoints
+				XStepCount = 20,
+				YStepCount = 20,
+				Solver = SolverType.Liebmann,
+				Eps = 0.00001d
 			};
 
 			var method = new EllipticalFiniteDifference(conditions, equation, @params);

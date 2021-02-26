@@ -11,8 +11,6 @@
 		public int XStepCount { get; set; }
 		public int YStepCount { get; set; }
 
-		public BoundaryApproximationType BoundaryApproximation { get; set; }
-
 		public SolverType Solver { get; set; }
 		public double Eps { get; set; }
 	}

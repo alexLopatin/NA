@@ -2,7 +2,7 @@
 {
 	public enum SolverType
 	{
-		Libman,
+		Liebmann,
 		Zeidel,
 		OverRelaxation
 	}
