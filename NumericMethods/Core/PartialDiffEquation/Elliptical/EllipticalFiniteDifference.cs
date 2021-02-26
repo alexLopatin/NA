@@ -105,10 +105,15 @@ namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 					for (int j = 1; j < _params.YStepCount; j++)
 					{
 						var f0 = _conditions.InitialConditions[0](GetXCoordinate(0), GetYCoordinate(j));
+						var phantom = alpha0 * prevGrid[1, j] + 2 * h1 / alpha0 * (betta0 * prevGrid[0, j] - f0);
 
 						nextGrid[0, j] =
-							((prevGrid[1, j] + alpha0 * prevGrid[1, j] + 2 * h1 / alpha0 * (betta0 * prevGrid[0, j] - f0)) / hx2
-							+ (prevGrid[0, j + 1] + prevGrid[0, j - 1]) / hy2)
+							((prevGrid[1, j] + phantom) / hx2
+							+ (prevGrid[0, j + 1] + prevGrid[0, j - 1]) / hy2
+							- a * (prevGrid[1, j] - phantom) / (2 * h1)
+							- b * (prevGrid[0, j + 1] - prevGrid[0, j - 1]) / (2 * h2)
+							- c * prevGrid[0, j]
+							- _equation.f(GetXCoordinate(0), GetYCoordinate(j)))
 							/ (2 / hx2 + 2 / hy2);
 					}
 				}
@@ -118,10 +123,15 @@ namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 					for (int i = 1; i < _params.XStepCount; i++)
 					{
 						var f0 = _conditions.InitialConditions[2](GetXCoordinate(i), 0);
+						var phantom = alpha1 * prevGrid[i, 1] + 2 * h2 / alpha1 * (betta1 * prevGrid[i, 0] - f0);
 
 						nextGrid[i, 0] =
 							((prevGrid[i + 1, 0] + prevGrid[i - 1, 0]) / hx2
-							+ (prevGrid[i, 1] + alpha1 * prevGrid[i, 1] + 2 * h2 / alpha1 * (betta1 * prevGrid[i, 0] - f0)) / hy2)
+							+ (prevGrid[i, 1] + phantom) / hy2
+							- a * (prevGrid[i + 1, 0] - prevGrid[i - 1, 0]) / (2 * h1)
+							- b * (prevGrid[i, 1] - phantom) / (2 * h2)
+							- c * prevGrid[i, 0]
+							- _equation.f(GetXCoordinate(i), GetYCoordinate(0)))
 							/ (2 / hx2 + 2 / hy2);
 					}
 				}
@@ -135,19 +145,31 @@ namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 							case SolverType.Liebmann:
 								nextGrid[i, j] =
 									((prevGrid[i + 1, j] + prevGrid[i - 1, j]) / hx2
-									+ (prevGrid[i, j + 1] + prevGrid[i, j - 1]) / hy2)
+									+ (prevGrid[i, j + 1] + prevGrid[i, j - 1]) / hy2
+									- a * (prevGrid[i + 1, j] - prevGrid[i - 1, j]) / (2 * h1)
+									- b * (prevGrid[i, j + 1] - prevGrid[i, j - 1]) / (2 * h2)
+									- c * prevGrid[i, j]
+									- _equation.f(GetXCoordinate(i), GetYCoordinate(j)))
 									/ (2 / hx2 + 2 / hy2);
 								break;
 							case SolverType.Zeidel:
 								nextGrid[i, j] =
 									((prevGrid[i + 1, j] + nextGrid[i - 1, j]) / hx2
-									+ (prevGrid[i, j + 1] + nextGrid[i, j - 1]) / hy2)
+									+ (prevGrid[i, j + 1] + nextGrid[i, j - 1]) / hy2
+									- a * (prevGrid[i + 1, j] - nextGrid[i - 1, j]) / (2 * h1)
+									- b * (prevGrid[i, j + 1] - nextGrid[i, j - 1]) / (2 * h2)
+									- c * prevGrid[i, j]
+									- _equation.f(GetXCoordinate(i), GetYCoordinate(j)))
 									/ (2 / hx2 + 2 / hy2);
 								break;
 							case SolverType.OverRelaxation:
 								nextGrid[i, j] +=
 									w * (((prevGrid[i + 1, j] + nextGrid[i - 1, j]) / hx2
-										+ (prevGrid[i, j + 1] + nextGrid[i, j - 1]) / hy2)
+										+ (prevGrid[i, j + 1] + nextGrid[i, j - 1]) / hy2
+										- a * (prevGrid[i + 1, j] - nextGrid[i - 1, j]) / (2 * h1)
+										- b * (prevGrid[i, j + 1] - nextGrid[i, j - 1]) / (2 * h2)
+										- c * prevGrid[i, j]
+										- _equation.f(GetXCoordinate(i), GetYCoordinate(j)))
 										/ (2 / hx2 + 2 / hy2) - nextGrid[i, j]);
 								break;
 						}
@@ -160,10 +182,15 @@ namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 					{
 						var N = _params.XStepCount;
 						var fn = _conditions.InitialConditions[1](_params.XBoundRight, GetYCoordinate(j));
+						var phantom = gamma0 * prevGrid[N - 1, j] + 2 * h1 / gamma0 * (fn - delta0 * prevGrid[N, j]);
 
 						nextGrid[N, j] =
-							((gamma0 * prevGrid[N - 1, j] + 2 * h1 / gamma0 * (fn - delta0 * prevGrid[N, j]) + prevGrid[N - 1, j]) / hx2
-							+ (prevGrid[N, j + 1] + prevGrid[N, j - 1]) / hy2)
+							((phantom + prevGrid[N - 1, j]) / hx2
+							+ (prevGrid[N, j + 1] + prevGrid[N, j - 1]) / hy2
+							- a * (phantom - prevGrid[N - 1, j]) / (2 * h1)
+							- b * (prevGrid[N, j + 1] - prevGrid[N, j - 1]) / (2 * h2)
+							- c * prevGrid[N, j]
+							- _equation.f(GetXCoordinate(N), GetYCoordinate(j)))
 							/ (2 / hx2 + 2 / hy2);
 					}
 				}
@@ -174,10 +201,15 @@ namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 					{
 						var N = _params.YStepCount;
 						var fn = _conditions.InitialConditions[3](GetXCoordinate(i), 0);
+						var phantom = gamma1 * prevGrid[i, N - 1] + 2 * h2 / gamma1 * (fn - delta1 * prevGrid[i, N]);
 
 						nextGrid[i, N] =
 							((prevGrid[i + 1, N] + prevGrid[i - 1, N]) / hx2
-							+ (gamma1 * prevGrid[i, N - 1] + 2 * h2 / gamma1 * (fn - delta1 * prevGrid[i, N]) + prevGrid[i, N - 1]) / hy2)
+							+ (phantom + prevGrid[i, N - 1]) / hy2
+							- a * (prevGrid[i + 1, N] - prevGrid[i - 1, N]) / (2 * h1)
+							- b * (phantom - prevGrid[i, N - 1]) / (2 * h2)
+							- c * prevGrid[i, N]
+							- _equation.f(GetXCoordinate(i), GetYCoordinate(N)))
 							/ (2 / hx2 + 2 / hy2);
 					}
 				}
