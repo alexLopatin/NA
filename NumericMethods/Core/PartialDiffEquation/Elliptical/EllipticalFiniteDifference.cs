@@ -6,8 +6,6 @@ namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 {
 	public class EllipticalFiniteDifference
 	{
-		private readonly double[,] _grid;
-
 		private readonly EllipticalBoundaryConditions _conditions;
 		private readonly EllipticalFiniteDifferenceParams _params;
 		private readonly EllipticalEquationParams _equation;
@@ -20,8 +18,6 @@ namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 			_params = @params;
 			_conditions = conditions;
 			_equation = equation;
-
-			_grid = new double[_params.XStepCount + 1, _params.YStepCount + 1];
 		}
 
 		private double GetXCoordinate(int i)
@@ -32,11 +28,6 @@ namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 		private double GetYCoordinate(int i)
 		{
 			return (_params.YBoundRight - _params.YBoundLeft) / _params.YStepCount * i + _params.YBoundLeft;
-		}
-
-		private int Linearize(int i, int j)
-		{
-			return i + j * (_params.XStepCount + 1);
 		}
 
 		public double[,] Solve()
@@ -62,130 +53,167 @@ namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 
 			var dim = (_params.XStepCount + 1) * (_params.YStepCount + 1);
 
-			var matrix = new Matrix(dim, dim);
-			var d = new Matrix(dim, 1);
+			var prevGrid = new double[_params.XStepCount + 1, _params.YStepCount + 1];
+			var nextGrid = new double[_params.XStepCount + 1, _params.YStepCount + 1];
+
+			var hx2 = h1 * h1;
+			var hy2 = h2 * h2;
+
+			for (int i = 0; i <= _params.XStepCount; i++)
+			{
+				prevGrid[i, 0] = _conditions.InitialConditions[2](GetXCoordinate(i), GetYCoordinate(0));
+				nextGrid[i, 0] = _conditions.InitialConditions[2](GetXCoordinate(i), GetYCoordinate(0));
+
+				prevGrid[i, _params.YStepCount] = _conditions.InitialConditions[3](GetXCoordinate(i), _params.YBoundRight);
+				nextGrid[i, _params.YStepCount] = _conditions.InitialConditions[3](GetXCoordinate(i), _params.YBoundRight);
+			}
 
 			for (int j = 1; j < _params.YStepCount; j++)
 			{
 				var N = _params.XStepCount;
-				var f0 = _conditions.InitialConditions[0](0, GetYCoordinate(j));
-				var fn = _conditions.InitialConditions[1](0, GetYCoordinate(j));
+				var f0 = _conditions.InitialConditions[0](GetXCoordinate(0), GetYCoordinate(j));
+				var fn = _conditions.InitialConditions[1](_params.XBoundRight, GetYCoordinate(j));
 
-				var alpha = _conditions.ConditionParameters[0, 0];
-				var betta = _conditions.ConditionParameters[0, 1];
+				prevGrid[0, j] = f0 - Math.Cos(GetXCoordinate(0)) * Math.Exp(GetYCoordinate(j));
+				prevGrid[_params.XStepCount, j] = fn - Math.Cos(_params.XBoundRight) * Math.Exp(GetYCoordinate(j));
 
-				var gamma = _conditions.ConditionParameters[1, 0];
-				var delta = _conditions.ConditionParameters[1, 1];
+				nextGrid[0, j] = f0 - Math.Cos(GetXCoordinate(0)) * Math.Exp(GetYCoordinate(j));
+				nextGrid[_params.XStepCount, j] = fn - Math.Cos(_params.XBoundRight) * Math.Exp(GetYCoordinate(j));
 
-				switch (_params.BoundaryApproximation)
+				/*prevGrid[0, j] = -(alpha0 / (N * h1)) / (betta0 - alpha0 / (N * h1)) * fn +
+						f0 / (betta0 - alpha0 / (N * h1));
+				prevGrid[_params.XStepCount, j] = (gamma0 / (N * h1)) / (delta0 + gamma0 / (N * h1)) * f0 +
+						fn / (delta0 + gamma0 / (N * h1));
+
+				nextGrid[0, j] = -(alpha0 / (N * h1)) / (betta0 - alpha0 / (N * h1)) * fn +
+						f0 / (betta0 - alpha0 / (N * h1));
+				nextGrid[_params.XStepCount, j] = (gamma0 / (N * h1)) / (delta0 + gamma0 / (N * h1)) * f0 +
+						fn / (delta0 + gamma0 / (N * h1));*/
+			}
+
+			/*for (int i = 0; i <= _params.XStepCount; i++)
+			{
+				var f0 = _conditions.InitialConditions[2](i, 0);
+				var fn = _conditions.InitialConditions[3](i, 0);
+
+				prevGrid[i, 0] = -(alpha1 / h2) / (betta1 - alpha1 / h2) * prevGrid[i, 1] +
+						f0 / (betta1 - alpha1 / h2);
+				prevGrid[i, _params.YStepCount] = (gamma1 / h2) / (delta1 + gamma1 / h2) * prevGrid[i, _params.YStepCount - 1] +
+						fn / (delta1 + gamma1 / h2);
+
+				nextGrid[i, 0] = -(alpha1 / h2) / (betta1 - alpha1 / h2) * prevGrid[i, 1] +
+						f0 / (betta1 - alpha1 / h2);
+				nextGrid[i, _params.YStepCount] = (gamma1 / h2) / (delta1 + gamma1 / h2) * prevGrid[i, _params.YStepCount - 1] +
+						fn / (delta1 + gamma1 / h2);
+
+				for (int j = 0; j <= _params.YStepCount; j++)
 				{
-					case BoundaryApproximationType.FirstDegreeTwoPoints:
-						d[Linearize(0, j)] = f0;
-						d[Linearize(N, j)] = fn;
-
-						matrix[Linearize(0, j), Linearize(0, j)] = betta - alpha / h1;
-						matrix[Linearize(0, j), Linearize(1, j)] = alpha / h1;
-
-						matrix[Linearize(N, j), Linearize(N - 1, j)] = -gamma / h1;
-						matrix[Linearize(N, j), Linearize(N, j)] = delta + gamma / h1;
-
-						break;
-					case BoundaryApproximationType.SecondDegreeThreePoints:
-						d[Linearize(0, j)] = f0;
-						d[Linearize(N, j)] = fn;
-
-						matrix[Linearize(0, j), Linearize(0, j)] = betta - 3 * alpha / (2 * h1);
-						matrix[Linearize(0, j), Linearize(1, j)] = 2 * alpha / h1;
-						matrix[Linearize(0, j), Linearize(2, j)] = (-alpha / (2 * h1));
-
-						matrix[Linearize(N, j), Linearize(N - 2, j)] = gamma / (2 * h1);
-						matrix[Linearize(N, j), Linearize(N - 1, j)] = -2 * gamma / h1;
-						matrix[Linearize(N, j), Linearize(N, j)] = delta + 3 * gamma / (2 * h1);
-
-						break;
+					//prevGrid[i, j] = (1 - (double)j / _params.YStepCount) * f0 + (double)j / _params.YStepCount * fn;
+					//nextGrid[i, j] = prevGrid[i, j];
 				}
 			}
 
-			for (int i = 0; i <= _params.XStepCount; i++)
+			for (int j = 1; j < _params.YStepCount; j++)
 			{
-				var N = _params.YStepCount;
-				var f0 = _conditions.InitialConditions[2](GetXCoordinate(i), 0);
-				var fn = _conditions.InitialConditions[3](GetXCoordinate(i), 0);
+				var f0 = _conditions.InitialConditions[0](0, j);
+				var fn = _conditions.InitialConditions[1](0, j);
 
-				var alpha = _conditions.ConditionParameters[2, 0];
-				var betta = _conditions.ConditionParameters[2, 1];
+				var g1 = (1 - 1.0d / _params.XStepCount) * f0 + 1.0d / _params.XStepCount * fn;
+				var gn = (1 - 1.0d / _params.XStepCount) * fn + 1.0d / _params.XStepCount * f0;
 
-				var gamma = _conditions.ConditionParameters[3, 0];
-				var delta = _conditions.ConditionParameters[3, 1];
+				prevGrid[0, j] = -(alpha0 / h1) / (betta0 - alpha0 / h1) * 0 +
+						f0 / (betta0 - alpha0 / h1);
+				prevGrid[_params.XStepCount, j] = (gamma0 / h1) / (delta0 + gamma0 / h1) * 0 +
+						fn / (delta0 + gamma0 / h1);
 
-				switch (_params.BoundaryApproximation)
+				nextGrid[0, j] = -(alpha0 / h1) / (betta0 - alpha0 / h1) * 0 +
+						f0 / (betta0 - alpha0 / h1);
+				nextGrid[_params.XStepCount, j] = (gamma0 / h1) / (delta0 + gamma0 / h1) * 0 +
+						fn / (delta0 + gamma0 / h1);
+			}*/
+
+			var it = 0;
+			var w = 1.2d;
+
+			do
+			{
+				for (int i = 1; i < _params.XStepCount; i++)
 				{
-					case BoundaryApproximationType.FirstDegreeTwoPoints:
-						d[Linearize(i, 0)] = f0;
-						d[Linearize(i, N)] = fn;
-
-						matrix[Linearize(i, 0), Linearize(i, 0)] = betta - alpha / h2;
-						matrix[Linearize(i, 0), Linearize(i, 1)] = alpha / h2;
-
-						matrix[Linearize(i, N), Linearize(i, N - 1)] = -gamma / h2;
-						matrix[Linearize(i, N), Linearize(i, N)] = delta + gamma / h2;
-
-						break;
-					case BoundaryApproximationType.SecondDegreeThreePoints:
-						d[Linearize(i, 0)] = f0;
-						d[Linearize(i, N)] = fn;
-
-						matrix[Linearize(i, 0), Linearize(i, 0)] = betta - 3 * alpha / (2 * h2);
-						matrix[Linearize(i, 0), Linearize(i, 1)] = 2 * alpha / h2;
-						matrix[Linearize(i, 0), Linearize(i, 2)] = (-alpha / (2 * h2));
-
-						matrix[Linearize(i, N), Linearize(i, N - 2)] = gamma / (2 * h2);
-						matrix[Linearize(i, N), Linearize(i, N - 1)] = -2 * gamma / h2;
-						matrix[Linearize(i, N), Linearize(i, N)] = delta + 3 * gamma / (2 * h2);
-						break;
+					for (int j = 1; j < _params.YStepCount; j++)
+					{
+						switch (_params.Solver)
+						{
+							case SolverType.Libman:
+								nextGrid[i, j] =
+									((prevGrid[i + 1, j] + prevGrid[i - 1, j]) / hx2
+									+ (prevGrid[i, j + 1] + prevGrid[i, j - 1]) / hy2)
+									/ (2 / hx2 + 2 / hy2);
+								break;
+							case SolverType.Zeidel:
+								nextGrid[i, j] =
+									((prevGrid[i + 1, j] + nextGrid[i - 1, j]) / hx2
+									+ (prevGrid[i, j + 1] + nextGrid[i, j - 1]) / hy2)
+									/ (2 / hx2 + 2 / hy2);
+								break;
+							case SolverType.OverRelaxation:
+								nextGrid[i, j] +=
+									w * (((prevGrid[i + 1, j] + nextGrid[i - 1, j]) / hx2
+										+ (prevGrid[i, j + 1] + nextGrid[i, j - 1]) / hy2)
+										/ (2 / hx2 + 2 / hy2) - nextGrid[i, j]);
+								break;
+						}
+					}
 				}
-			}
 
-			for (int i = 1; i < _params.XStepCount; i++)
-			{
 				for (int j = 1; j < _params.YStepCount; j++)
 				{
-					matrix[Linearize(i, j), Linearize(i, j)] = -2 / (h1 * h1) - 2 / (h2 * h2) - c;
-					matrix[Linearize(i, j), Linearize(i - 1, j)] = 1 / (h1 * h1) + a / h1;
-					matrix[Linearize(i, j), Linearize(i + 1, j)] = 1 / (h1 * h1) - a / h1;
-					matrix[Linearize(i, j), Linearize(i, j - 1)] = 1 / (h2 * h2) + b / h2;
-					matrix[Linearize(i, j), Linearize(i, j + 1)] = 1 / (h2 * h2) - b / h2;
+					var f0 = _conditions.InitialConditions[0](0, j);
+					var fn = _conditions.InitialConditions[1](0, j);
 
-					d[Linearize(i, j)] = _equation.f(GetXCoordinate(i), GetYCoordinate(j));
+					//nextGrid[0, j] = -(alpha0 / h1) / (betta0 - alpha0 / h1) * prevGrid[1, j] +
+					//		f0 / (betta0 - alpha0 / h1);
+					//nextGrid[0, j] = (-f0 + betta0 * nextGrid[0, 1]) / (alpha0 / h1) - nextGrid[0, 0];
+					//nextGrid[_params.XStepCount, j] = (-fn + delta0 * nextGrid[_params.XStepCount, 0]) / (gamma0 / h1) - nextGrid[_params.XStepCount - 1, 0];
+					//nextGrid[_params.XStepCount, j] = (gamma0 / h1) / (delta0 + gamma0 / h1) * prevGrid[_params.XStepCount - 1, j] +
+					//		fn / (delta0 + gamma0 / h1);
 				}
-			}
 
-			var solver = new IterationSolver(matrix, d, _params.Eps);
-
-			switch (_params.Solver)
-			{
-				case SolverType.Libman:
-					solver.Solve();
-					break;
-				case SolverType.Zeidel:
-					solver.ZeidelSolve();
-					break;
-				case SolverType.OverRelaxation:
-					solver.OverRelaxation();
-					break;
-			}
-
-			//solver.X.Log("x");
-
-			for (int i = 0; i < _params.XStepCount + 1; i++)
-			{
-				for (int j = 0; j < _params.YStepCount + 1; j++)
+				/*for (int i = 1; i < _params.XStepCount; i++)
 				{
-					_grid[i, j] = solver.X[Linearize(i, j)];
+					var f0 = _conditions.InitialConditions[2](i, 0);
+					var fn = _conditions.InitialConditions[3](i, 0);
+
+					nextGrid[i, 0] = -(alpha1 / h2) / (betta1 - alpha1 / h2) * prevGrid[i, 1] +
+							f0 / (betta1 - alpha1 / h2);
+					nextGrid[i, _params.YStepCount] = (gamma1 / h2) / (delta1 + gamma1 / h2) * prevGrid[i, _params.YStepCount - 1] +
+							fn / (delta1 + gamma1 / h2);
+				}*/
+
+				var tmp = prevGrid;
+				prevGrid = nextGrid;
+				nextGrid = tmp;
+				it++;
+			}
+			while (Norm(prevGrid, nextGrid) > _params.Eps);
+
+			Console.WriteLine($"iterations: {it}");
+
+			return nextGrid;
+		}
+
+		static double Norm(double[,] a, double[,] b)
+		{
+			var max = 0.0d;
+
+			for (int i = 1; i < a.GetLength(0) - 1; i++)
+			{
+				for (int j = 1; j < a.GetLength(1) - 1; j++)
+				{
+					max = Math.Max(max, Math.Abs(a[i, j] - b[i, j]));
 				}
 			}
 
-			return _grid;
+			return max;
 		}
 
 		/*private double[] SetBorderGrid(int k, Matrix matrix)
@@ -284,15 +312,15 @@ namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 			return d;
 		}*/
 
-		public double[,] FindError(Func<double, double, double> u)
+		public double[,] FindError(double[,] grid, Func<double, double, double> u)
 		{
-			var errors = _grid.Clone() as double[,];
+			var errors = new double[_params.XStepCount + 1, _params.YStepCount + 1];
 
 			for (int k = 0; k <= _params.YStepCount; k++)
 			{
 				for (int j = 0; j <= _params.XStepCount; j++)
 				{
-					errors[j, k] = Math.Abs(_grid[j, k] - u(GetXCoordinate(j), GetYCoordinate(k)));
+					errors[j, k] = Math.Abs(grid[j, k] - u(GetXCoordinate(j), GetYCoordinate(k)));
 				}
 			}
 

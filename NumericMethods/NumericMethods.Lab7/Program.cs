@@ -43,40 +43,40 @@ namespace Lab7
 		{
 			var conditions = new EllipticalBoundaryConditions()
 			{
-				ConditionParameters = new double[4,2] { { 1, 0 }, { 1, -1 }, { 0, 1 }, { 0, 1 } },
+				ConditionParameters = new double[4,2] { { 1, 0 }, { 1, 0 }, { 0, 1 }, { 0, 1 } },
 				InitialConditions = new Func<double, double, double>[4]
 				{
-					(x, y) => Math.Cos(y),
-					(x, y) => 0,
-					(x, y) => x,
-					(x, y) => 0
+					(x, y) => Math.Exp(y),
+					(x, y) => -Math.Exp(y),
+					(x, y) => Math.Sin(x),
+					(x, y) => Math.E * Math.Sin(x)
 				}
 			};
 			var equation = new EllipticalEquationParams()
 			{
 				a = .0d,
 				b = .0d,
-				c = -1.0d,
-				f = (x, t) => 0
+				c = .0d,
+				f = (x, y) => 0
 			};
 			var @params = new EllipticalFiniteDifferenceParams()
 			{
 				XBoundLeft = 0,
-				XBoundRight = 1d,
+				XBoundRight = Math.PI,
 				YBoundLeft = 0,
-				YBoundRight = Math.PI / 2,
-				XStepCount = 15,
-				YStepCount = 15,
+				YBoundRight = 1d,
+				XStepCount = 10,
+				YStepCount = 10,
 				Solver = SolverType.Libman,
-				Eps = 0.0001d,
-				BoundaryApproximation = BoundaryApproximationType.SecondDegreeThreePoints
+				Eps = 0.00001d,
+				BoundaryApproximation = BoundaryApproximationType.FirstDegreeTwoPoints
 			};
 
 			var method = new EllipticalFiniteDifference(conditions, equation, @params);
 
 			var result = method.Solve();
 
-			var errors = method.FindError((x, y) => x * Math.Cos(y));
+			var errors = method.FindError(result, (x, y) => Math.Exp(y) * Math.Sin(x));
 
 			var maxError = FindMax(errors);
 			var median = FindMedian(errors);
