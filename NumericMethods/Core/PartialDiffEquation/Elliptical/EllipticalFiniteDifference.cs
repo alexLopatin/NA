@@ -59,13 +59,40 @@ namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 			var hx2 = h1 * h1;
 			var hy2 = h2 * h2;
 
-			for (int i = 0; i <= _params.XStepCount; i++)
+			if (alpha0 < _params.Eps)
 			{
-				prevGrid[i, 0] = _conditions.InitialConditions[2](GetXCoordinate(i), GetYCoordinate(0));
-				nextGrid[i, 0] = _conditions.InitialConditions[2](GetXCoordinate(i), GetYCoordinate(0));
+				for (int j = 0; j <= _params.YStepCount; j++)
+				{
+					prevGrid[0, j] = _conditions.InitialConditions[0](0, GetYCoordinate(j)) / betta0;
+					nextGrid[0, j] = prevGrid[0, j];
+				}
+			}
 
-				prevGrid[i, _params.YStepCount] = _conditions.InitialConditions[3](GetXCoordinate(i), _params.YBoundRight);
-				nextGrid[i, _params.YStepCount] = _conditions.InitialConditions[3](GetXCoordinate(i), _params.YBoundRight);
+			if (gamma0 < _params.Eps)
+			{
+				for (int j = 0; j <= _params.YStepCount; j++)
+				{
+					prevGrid[_params.XStepCount, j] = _conditions.InitialConditions[1](0, GetYCoordinate(j)) / delta0;
+					nextGrid[_params.XStepCount, j] = prevGrid[_params.XStepCount, j];
+				}
+			}
+
+			if (alpha1 < _params.Eps)
+			{
+				for (int i = 0; i <= _params.XStepCount; i++)
+				{
+					prevGrid[i, 0] = _conditions.InitialConditions[2](GetXCoordinate(i), 0) / betta1;
+					nextGrid[i, 0] = prevGrid[i, 0];
+				}
+			}
+
+			if (gamma1 < _params.Eps)
+			{
+				for (int i = 0; i <= _params.XStepCount; i++)
+				{
+					prevGrid[i, _params.YStepCount] = _conditions.InitialConditions[3](GetXCoordinate(i), 0) / delta1;
+					nextGrid[i, _params.YStepCount] = prevGrid[i, _params.YStepCount];
+				}
 			}
 
 			var it = 0;
@@ -73,14 +100,30 @@ namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 
 			do
 			{
-				for (int j = 1; j < _params.YStepCount; j++)
+				if (alpha0 > _params.Eps)
 				{
-					var f0 = _conditions.InitialConditions[0](GetXCoordinate(0), GetYCoordinate(j));
+					for (int j = 1; j < _params.YStepCount; j++)
+					{
+						var f0 = _conditions.InitialConditions[0](GetXCoordinate(0), GetYCoordinate(j));
 
-					nextGrid[0, j] =
-						((2 * prevGrid[1, j] - 2 * h1 * f0) / hx2
-						+ (prevGrid[0, j + 1] + prevGrid[0, j - 1]) / hy2)
-						/ (2 / hx2 + 2 / hy2);
+						nextGrid[0, j] =
+							((prevGrid[1, j] + alpha0 * prevGrid[1, j] + 2 * h1 / alpha0 * (betta0 * prevGrid[0, j] - f0)) / hx2
+							+ (prevGrid[0, j + 1] + prevGrid[0, j - 1]) / hy2)
+							/ (2 / hx2 + 2 / hy2);
+					}
+				}
+
+				if (alpha1 > _params.Eps)
+				{
+					for (int i = 1; i < _params.XStepCount; i++)
+					{
+						var f0 = _conditions.InitialConditions[2](GetXCoordinate(i), 0);
+
+						nextGrid[i, 0] =
+							((prevGrid[i + 1, 0] + prevGrid[i - 1, 0]) / hx2
+							+ (prevGrid[i, 1] + alpha1 * prevGrid[i, 1] + 2 * h2 / alpha1 * (betta1 * prevGrid[i, 0] - f0)) / hy2)
+							/ (2 / hx2 + 2 / hy2);
+					}
 				}
 
 				for (int i = 1; i < _params.XStepCount; i++)
@@ -111,15 +154,32 @@ namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 					}
 				}
 
-				for (int j = 1; j < _params.YStepCount; j++)
+				if (gamma0 > _params.Eps)
 				{
-					var N = _params.XStepCount;
-					var fn = _conditions.InitialConditions[1](_params.XBoundRight, GetYCoordinate(j));
+					for (int j = 1; j < _params.YStepCount; j++)
+					{
+						var N = _params.XStepCount;
+						var fn = _conditions.InitialConditions[1](_params.XBoundRight, GetYCoordinate(j));
 
-					nextGrid[N, j] =
-						((2 * prevGrid[N - 1, j] + 2 * h1 * fn) / hx2
-						+ (prevGrid[N, j + 1] + prevGrid[N, j - 1]) / hy2)
-						/ (2 / hx2 + 2 / hy2);
+						nextGrid[N, j] =
+							((gamma0 * prevGrid[N - 1, j] + 2 * h1 / gamma0 * (fn - delta0 * prevGrid[N, j]) + prevGrid[N - 1, j]) / hx2
+							+ (prevGrid[N, j + 1] + prevGrid[N, j - 1]) / hy2)
+							/ (2 / hx2 + 2 / hy2);
+					}
+				}
+
+				if (gamma1 > _params.Eps)
+				{
+					for (int i = 1; i < _params.XStepCount; i++)
+					{
+						var N = _params.YStepCount;
+						var fn = _conditions.InitialConditions[3](GetXCoordinate(i), 0);
+
+						nextGrid[i, N] =
+							((prevGrid[i + 1, N] + prevGrid[i - 1, N]) / hx2
+							+ (gamma1 * prevGrid[i, N - 1] + 2 * h2 / gamma1 * (fn - delta1 * prevGrid[i, N]) + prevGrid[i, N - 1]) / hy2)
+							/ (2 / hx2 + 2 / hy2);
+					}
 				}
 
 				var tmp = prevGrid;

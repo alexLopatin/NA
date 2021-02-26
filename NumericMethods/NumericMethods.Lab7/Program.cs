@@ -43,13 +43,13 @@ namespace Lab7
 		{
 			var conditions = new EllipticalBoundaryConditions()
 			{
-				ConditionParameters = new double[4,2] { { 1, 0 }, { 1, 0 }, { 0, 1 }, { 0, 1 } },
+				ConditionParameters = new double[4,2] { { 1, 0 }, { 0, 1 }, { 1, 0 }, { 0, 1 } },
 				InitialConditions = new Func<double, double, double>[4]
 				{
-					(x, y) => Math.Exp(y),
-					(x, y) => -Math.Exp(y),
-					(x, y) => Math.Sin(x),
-					(x, y) => Math.E * Math.Sin(x)
+					(x, y) => 0,
+					(x, y) => 1 - y * y,
+					(x, y) => 0,
+					(x, y) => x * x - 1
 				}
 			};
 			var equation = new EllipticalEquationParams()
@@ -62,7 +62,7 @@ namespace Lab7
 			var @params = new EllipticalFiniteDifferenceParams()
 			{
 				XBoundLeft = 0,
-				XBoundRight = Math.PI,
+				XBoundRight = 1d,
 				YBoundLeft = 0,
 				YBoundRight = 1d,
 				XStepCount = 20,
@@ -75,7 +75,7 @@ namespace Lab7
 
 			var result = method.Solve();
 
-			var errors = method.FindError(result, (x, y) => Math.Exp(y) * Math.Sin(x));
+			var errors = method.FindError(result, (x, y) => x * x - y * y);
 
 			var maxError = FindMax(errors);
 			var median = FindMedian(errors);
