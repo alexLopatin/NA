@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ILNumerics;
+using static ILNumerics.ILMath;
+using static ILNumerics.Globals;
 using NumericMethods.Core;
 using NumericMethods.Core.Expressions;
 using NumericMethods.Core.Expressions.Helpers;
@@ -66,29 +69,41 @@ namespace Lab5
 				SpaceBoundRight = Math.PI,
 				TimeLimit = 1d,
 				SpaceStepCount = 20,
-				TimeStepCount = 400,
-				BoundaryApproximation = BoundaryApproximationType.SecondDegreeTwoPoints
+				TimeStepCount = 100,
+				BoundaryApproximation = BoundaryApproximationType.SecondDegreeThreePoints
 			};
+			Array<double> FirstDegree = Array.Empty<double>();
+			Array<double> SecondDegree = Array.Empty<double>();
+			Array<double> errNonLog = Array.Empty<double>();
 
-
-			var exp = new Expression();
-			var varList = new List<Variable>()
+			for (int i = 10; i <= 100; i += 10)
 			{
-				new Variable("x", 2),
-				new Variable("y", Math.E)
-			};
-			exp.FromString("(x^2 + 6 * e^y) / (3 - 8 / (2* y))", varList);
-			Console.WriteLine(exp.GetValue());
-			var method = new CrankNikolsonMethod(conditions, equation, @params);
+				@params.BoundaryApproximation = BoundaryApproximationType.SecondDegreeTwoPoints;
+				@params.SpaceStepCount = i;
+				@params.TimeStepCount = i * i * 2;
+				var method = new ParabolicImplicitFiniteDifference(conditions, equation, @params);
+				var result = method.Solve();
+				var errors = method.FindError((x, t) => Math.Exp(-2 * t) * Math.Sin(x + t));
+				var maxError = FindMax(errors);
+				SecondDegree = SecondDegree.Append(-Math.Log(maxError)).ToArray();
+				errNonLog = errNonLog.Append(maxError).ToArray();
+			}
 
-			var result = method.Solve();
+			for (int i = 10; i <= 100; i += 10)
+			{
+				@params.BoundaryApproximation = BoundaryApproximationType.FirstDegreeTwoPoints;
+				@params.SpaceStepCount = i;
+				@params.TimeStepCount = i * i * 2;
+				var method = new ParabolicImplicitFiniteDifference(conditions, equation, @params);
+				var result = method.Solve();
+				var errors = method.FindError((x, t) => Math.Exp(-2 * t) * Math.Sin(x + t));
+				var maxError = Math.Log(FindMax(errors));
+				FirstDegree = FirstDegree.Append(-maxError).ToArray();
+			}
 
-			var errors = method.FindError((x, t) => Math.Exp(-2 * t) * Math.Sin(x + t));
+			var allDegrees = ILMath.horzcat(FirstDegree, SecondDegree).T;
+			errNonLog = errNonLog.T;
 
-			var maxError = FindMax(errors);
-			var median = FindMedian(errors);
-
-			Console.WriteLine($"Max error: {maxError}; median error: {median}");
 			Console.ReadKey();
 		}
 	}
