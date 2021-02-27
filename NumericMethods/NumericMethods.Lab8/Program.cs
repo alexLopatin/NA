@@ -1,5 +1,5 @@
 ﻿using NumericMethods.Core.PartialDiffEquation;
-using NumericMethods.Core.PartialDiffEquation.Elliptical;
+using NumericMethods.Core.PartialDiffEquation.Splitting;
 using System;
 using System.Collections.Generic;
 
@@ -7,7 +7,7 @@ namespace Lab7
 {
 	class Program
 	{
-		static double FindMedian(double[,] grid)
+		static double FindMedian(double[,,] grid)
 		{
 			List<double> linear = new List<double>();
 
@@ -15,7 +15,10 @@ namespace Lab7
 			{
 				for (int j = 0; j < grid.GetLength(1); j++)
 				{
-					linear.Add(grid[i, j]);
+					for (int k = 0; k < grid.GetLength(2); k++)
+					{
+						linear.Add(grid[i, j, k]);
+					}
 				}
 			}
 
@@ -24,7 +27,7 @@ namespace Lab7
 			return linear[linear.Count / 2];
 		}
 
-		static double FindMax(double[,] grid)
+		static double FindMax(double[,,] grid)
 		{
 			var max = 0.0d;
 
@@ -32,7 +35,10 @@ namespace Lab7
 			{
 				for (int j = 0; j < grid.GetLength(1); j++)
 				{
-					max = Math.Max(max, grid[i, j]);
+					for (int k = 0; k < grid.GetLength(2); k++)
+					{
+						max = Math.Max(max, grid[i, j, k]);
+					}
 				}
 			}
 
@@ -41,41 +47,41 @@ namespace Lab7
 
 		static void Main(string[] args)
 		{
-			var conditions = new EllipticalBoundaryConditions()
+			var conditions = new SplittingBoundaryConditions()
 			{
 				ConditionParameters = new double[4, 2] { { 0, 1 }, { 0, 1 }, { 1, 0 }, { 1, -1 } },
-				InitialConditions = new Func<double, double, double>[4]
+				InitialConditions = new Func<double, double, double, double>[4]
 				{
-					(x, y) => 0,
-					(x, y) => y,
-					(x, y) => Math.Sin(x),
-					(x, y) => 0
-				}
+					(x, y, t) => Math.Cos(y) * Math.Exp(-2 * t),
+					(x, y, t) => -Math.Cos(y) * Math.Exp(-2 * t),
+					(x, y, t) => Math.Cos(x) * Math.Exp(-2 * t),
+					(x, y, t) => -Math.Cos(x) * Math.Exp(-2 * t)
+				},
+				ZeroTimeCondition = (x, y, t) => Math.Cos(x) * Math.Cos(y)
 			};
-			var equation = new EllipticalEquationParams()
+			var equation = new SplittingEquationParams()
 			{
-				a = .0d,
-				b = .0d,
-				c = -1.0d,
-				f = (x, y) => 0
+				a = 1.0d,
+				b = 1.0d,
+				f = (x, y, t) => 0
 			};
-			var @params = new EllipticalFiniteDifferenceParams()
+			var @params = new SplittingFiniteDifferenceParams()
 			{
 				XBoundLeft = 0,
-				XBoundRight = Math.PI / 2,
+				XBoundRight = Math.PI,
 				YBoundLeft = 0,
-				YBoundRight = 1d,
-				XStepCount = 80,
-				YStepCount = 80,
-				Solver = SolverType.OverRelaxation,
-				Eps = 0.0000001d
+				YBoundRight = Math.PI,
+				XStepCount = 20,
+				YStepCount = 20,
+				TimeLimit = 1d,
+				TimeStepCount = 20
 			};
 
-			var method = new EllipticalFiniteDifference(conditions, equation, @params);
+			var method = new AlternatingDirectionMethod(conditions, equation, @params);
 
 			var result = method.Solve();
 
-			var errors = method.FindError(result, (x, y) => y * Math.Sin(x));
+			var errors = method.FindError((x, y, t) => Math.Cos(x) * Math.Cos(y) * Math.Exp(-2 * t));
 
 			var maxError = FindMax(errors);
 			var median = FindMedian(errors);

@@ -2,13 +2,15 @@
 
 namespace NumericMethods.Core.PartialDiffEquation.Elliptical
 {
-	public class SplittingEquationParams
+	public class EllipticalEquationParams
 	{
-		//dx2
+		//dx
 		public double a { get; set; }
-		//dy2
+		//dx
 		public double b { get; set; }
+		//u
+		public double c { get; set; }
 		//free
-		public Func<double, double, double, double> f { get; set; }
+		public Func<double, double, double> f { get; set; }
 	}
 }

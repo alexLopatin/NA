@@ -11,6 +11,6 @@ namespace NumericMethods.Core.PartialDiffEquation.Splitting
 		//u
 		public double c { get; set; }
 		//free
-		public Func<double, double, double> f { get; set; }
+		public Func<double, double, double, double> f { get; set; }
 	}
 }
