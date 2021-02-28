@@ -71,14 +71,14 @@ namespace Lab7
 				XBoundRight = Math.PI / 4,
 				YBoundLeft = 0,
 				YBoundRight = Math.Log(2),
-				XStepCount = 20,
-				YStepCount = 20,
+				XStepCount = 160,
+				YStepCount = 160,
 				TimeLimit = 1d,
-				TimeStepCount = 20,
+				TimeStepCount = 160,
 				BoundaryApproximation = BoundaryApproximationType.SecondDegreeThreePoints
 			};
 
-			var method = new AlternatingDirectionMethod(conditions, equation, @params);
+			var method = new FractionalStepMethod(conditions, equation, @params);
 
 			var result = method.Solve();
 

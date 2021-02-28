@@ -3,7 +3,7 @@ using NumericMethods.Core.LinearAlgebra;
 
 namespace NumericMethods.Core.PartialDiffEquation.Splitting
 {
-	public class AlternatingDirectionMethod
+	public class FractionalStepMethod
 	{
 		private readonly double[,,] _grid;
 
@@ -11,7 +11,7 @@ namespace NumericMethods.Core.PartialDiffEquation.Splitting
 		private readonly SplittingFiniteDifferenceParams _params;
 		private readonly SplittingEquationParams _equation;
 
-		public AlternatingDirectionMethod(
+		public FractionalStepMethod(
 			SplittingBoundaryConditions conditions,
 			SplittingEquationParams equation,
 			SplittingFiniteDifferenceParams @params)
@@ -80,14 +80,14 @@ namespace NumericMethods.Core.PartialDiffEquation.Splitting
 
 			for (int i = 0; i < _params.XStepCount; i++)
 			{
-				firstMatrix[i, i] = -2 * a / (hx * hx) - 2 / tau;
+				firstMatrix[i, i] = -2 * a / (hx * hx) - 1 / tau;
 				firstMatrix[i, i + 1] = a / (hx * hx);
 				firstMatrix[i + 1, i] = a / (hx * hx);
 			}
 
 			for (int i = 0; i < _params.YStepCount; i++)
 			{
-				secondMatrix[i, i] = -2 * b / (hy * hy) - 2 / tau;
+				secondMatrix[i, i] = -2 * b / (hy * hy) - 1 / tau;
 				secondMatrix[i, i + 1] = b / (hy * hy);
 				secondMatrix[i + 1, i] = b / (hy * hy);
 			}
@@ -251,8 +251,7 @@ namespace NumericMethods.Core.PartialDiffEquation.Splitting
 
 			for (int i = 1; i < _params.XStepCount; i++)
 			{
-				d[i] = -(2 * _grid[i, j, k] / tau
-					+ b / (hy * hy) * (_grid[i, j + 1, k] - 2 * _grid[i, j, k] + _grid[i, j - 1, k])
+				d[i] = -(_grid[i, j, k] / tau
 					+ _equation.f(GetXCoordinate(i), GetYCoordinate(j), GetTimeCoordinate(k)));
 			}
 
@@ -281,9 +280,8 @@ namespace NumericMethods.Core.PartialDiffEquation.Splitting
 
 			for (int j = 1; j < _params.YStepCount; j++)
 			{
-				d[j] = -(2 * halfStep[i, j] / tau
-					+ a / (hx * hx) * (halfStep[i + 1, j] - 2 * halfStep[i, j] + halfStep[i - 1, j])
-					+ _equation.f(GetXCoordinate(i), GetYCoordinate(j), GetTimeCoordinate(k + 0.5d)));
+				d[j] = -(halfStep[i, j] / tau
+					+ _equation.f(GetXCoordinate(i), GetYCoordinate(j), GetTimeCoordinate(k + 1)));
 			}
 
 			if (_params.BoundaryApproximation == BoundaryApproximationType.SecondDegreeThreePoints)
