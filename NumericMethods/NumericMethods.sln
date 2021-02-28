@@ -9,9 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NumericMethods.Core", "Core
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NumericMethods.Lab6", "Lab6\NumericMethods.Lab6.csproj", "{0F1C2BE1-8CB3-4DCC-B446-CB596BB96BFD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NumericMethods.Lab7", "NumericMethods.Lab7\NumericMethods.Lab7.csproj", "{6BAD2229-D4D1-4329-BD20-22CFC03F645A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NumericMethods.Lab7", "Lab7\NumericMethods.Lab7.csproj", "{6BAD2229-D4D1-4329-BD20-22CFC03F645A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NumericMethods.Lab8", "NumericMethods.Lab8\NumericMethods.Lab8.csproj", "{0B2AE91C-0C2F-4297-86EA-8A742F5C1C40}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NumericMethods.Lab8", "Lab8\NumericMethods.Lab8.csproj", "{0B2AE91C-0C2F-4297-86EA-8A742F5C1C40}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
