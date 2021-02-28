@@ -49,15 +49,15 @@ namespace Lab7
 		{
 			var conditions = new SplittingBoundaryConditions()
 			{
-				ConditionParameters = new double[4, 2] { { 0, 1 }, { 0, 1 }, { 1, 0 }, { 1, -1 } },
+				ConditionParameters = new double[4, 2] { { 0, 1 }, { 1, 0 }, { 1, 0 }, { 0, 1 } },
 				InitialConditions = new Func<double, double, double, double>[4]
 				{
-					(x, y, t) => Math.Cos(y) * Math.Exp(-2 * t),
-					(x, y, t) => -Math.Cos(y) * Math.Exp(-2 * t),
-					(x, y, t) => Math.Cos(x) * Math.Exp(-2 * t),
-					(x, y, t) => -Math.Cos(x) * Math.Exp(-2 * t)
+					(x, y, t) => Math.Sinh(y) * Math.Exp(-3 * t),
+					(x, y, t) => -2 * Math.Sinh(y) * Math.Exp(-3 * t),
+					(x, y, t) => Math.Cos(2 * x) * Math.Exp(-3 * t),
+					(x, y, t) => 3.0d / 4 * Math.Cos(2 * x) * Math.Exp(-3 * t)
 				},
-				ZeroTimeCondition = (x, y, t) => Math.Cos(x) * Math.Cos(y)
+				ZeroTimeCondition = (x, y, t) => Math.Cos(2 * x) * Math.Sinh(y)
 			};
 			var equation = new SplittingEquationParams()
 			{
@@ -68,20 +68,21 @@ namespace Lab7
 			var @params = new SplittingFiniteDifferenceParams()
 			{
 				XBoundLeft = 0,
-				XBoundRight = Math.PI,
+				XBoundRight = Math.PI / 4,
 				YBoundLeft = 0,
-				YBoundRight = Math.PI,
+				YBoundRight = Math.Log(2),
 				XStepCount = 20,
 				YStepCount = 20,
 				TimeLimit = 1d,
-				TimeStepCount = 20
+				TimeStepCount = 20,
+				BoundaryApproximation = BoundaryApproximationType.SecondDegreeThreePoints
 			};
 
 			var method = new AlternatingDirectionMethod(conditions, equation, @params);
 
 			var result = method.Solve();
 
-			var errors = method.FindError((x, y, t) => Math.Cos(x) * Math.Cos(y) * Math.Exp(-2 * t));
+			var errors = method.FindError((x, y, t) => Math.Cos(2 * x) * Math.Sinh(y) * Math.Exp(-3 * t));
 
 			var maxError = FindMax(errors);
 			var median = FindMedian(errors);
