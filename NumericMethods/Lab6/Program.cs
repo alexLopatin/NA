@@ -3,6 +3,11 @@ using NumericMethods.Core.PartialDiffEquation.Hyperbolic;
 using System;
 using System.Collections.Generic;
 
+using ILNumerics;
+using static ILNumerics.ILMath;
+using static ILNumerics.Globals;
+using System.Linq;
+
 namespace Lab6
 {
 	class Program
@@ -66,19 +71,40 @@ namespace Lab6
 				SpaceStepCount = 200,
 				TimeStepCount = 600,
 				InitialApproximation = InitialApproximationType.FirstDegree,
-				BoundaryApproximation = BoundaryApproximationType.SecondDegreeThreePoints
+				BoundaryApproximation = BoundaryApproximationType.SecondDegreeTwoPoints
 			};
+			Array<double> FirstDegree = Array.Empty<double>();
+			Array<double> SecondDegree = Array.Empty<double>();
+			Array<double> errNonLog = Array.Empty<double>();
 
-			var method = new HyperbolicExplicitFiniteDifference(conditions, equation, @params);
+			for (int i = 100; i <= 1000; i += 100)
+			{
+				@params.BoundaryApproximation = BoundaryApproximationType.SecondDegreeTwoPoints;
+				@params.SpaceStepCount = i;
+				@params.TimeStepCount = i;
+				var method = new HyperbolicExplicitFiniteDifference(conditions, equation, @params);
+				var result = method.Solve();
+				var errors = method.FindError((x, t) => Math.Cos(t) * Math.Exp(2 * x));
+				var maxError = FindMax(errors);
+				SecondDegree = SecondDegree.Append(Math.Log(maxError)).ToArray();
+				errNonLog = errNonLog.Append(maxError).ToArray();
+			}
 
-			var result = method.Solve();
+			for (int i = 100; i <= 1000; i += 100)
+			{
+				@params.BoundaryApproximation = BoundaryApproximationType.SecondDegreeTwoPoints;
+				@params.InitialApproximation = InitialApproximationType.SecondDegree;
+				@params.SpaceStepCount = i;
+				@params.TimeStepCount = i;
+				var method = new HyperbolicExplicitFiniteDifference(conditions, equation, @params);
+				var result = method.Solve();
+				var errors = method.FindError((x, t) => Math.Cos(t) * Math.Exp(2 * x));
+				var maxError = Math.Log(FindMax(errors));
+				FirstDegree = FirstDegree.Append(maxError).ToArray();
+			}
 
-			var errors = method.FindError((x, t) => Math.Cos(t) * Math.Exp(2 * x));
-
-			var maxError = FindMax(errors);
-			var median = FindMedian(errors);
-
-			Console.WriteLine($"Max error: {maxError}; median error: {median}");
+			var allDegrees = ILMath.horzcat(FirstDegree, SecondDegree).T;
+			errNonLog = errNonLog.T;
 			Console.ReadKey();
 		}
 	}
