@@ -1,12 +1,35 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
-
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="5.0.2" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\NumericMethods.Core.csproj" />
   </ItemGroup>
-
+  <ItemGroup>
+    <Reference Include="ILNumerics.Computing">
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.Computing.dll</HintPath>
+    </Reference>
+    <Reference Include="ILNumerics.Core">
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="ILNumerics.Drawing">
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.Drawing.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ILNumerics_deploy\ILNImports1.targets" />
+    <None Include="ILNumerics_deploy\ILNImports2.targets" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ILNumerics_deploy\ilnumerics.lic" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ILNumerics_deploy\ILNHelper.cs" Condition="$(EnableDefaultCompileItems) != 'true'" />
+  </ItemGroup>
+  <Import Project="ILNumerics_deploy\ILNImports1.targets" Condition="$(ILNLicCompile) != 'true'" />
+  <Import Project="ILNumerics_deploy\ILNImports2.targets" Condition="$(ILNLicCompile) == 'true'" />
 </Project>

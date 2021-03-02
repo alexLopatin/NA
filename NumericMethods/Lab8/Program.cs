@@ -3,6 +3,11 @@ using NumericMethods.Core.PartialDiffEquation.Splitting;
 using System;
 using System.Collections.Generic;
 
+using ILNumerics;
+using static ILNumerics.ILMath;
+using static ILNumerics.Globals;
+using System.Linq;
+
 namespace Lab7
 {
 	class Program
@@ -71,23 +76,43 @@ namespace Lab7
 				XBoundRight = Math.PI / 4,
 				YBoundLeft = 0,
 				YBoundRight = Math.Log(2),
-				XStepCount = 160,
-				YStepCount = 160,
+				XStepCount = 200,
+				YStepCount = 200,
 				TimeLimit = 1d,
-				TimeStepCount = 160,
+				TimeStepCount = 360,
 				BoundaryApproximation = BoundaryApproximationType.SecondDegreeThreePoints
 			};
 
-			var method = new FractionalStepMethod(conditions, equation, @params);
+			Array<double> FirstDegree = Array.Empty<double>();
+			Array<double> SecondDegree = Array.Empty<double>();
+			Array<double> errNonLog = Array.Empty<double>();
 
-			var result = method.Solve();
+			for (int i = 10; i <= 80; i += 10)
+			{
+				@params.BoundaryApproximation = BoundaryApproximationType.SecondDegreeThreePoints;
+				@params.TimeStepCount = i;
+				var method = new FractionalStepMethod(conditions, equation, @params);
+				var result = method.Solve();
+				var errors = method.FindError((x, y, t) => Math.Cos(2 * x) * Math.Sinh(y) * Math.Exp(-3 * t));
+				var maxError = FindMax(errors);
+				SecondDegree = SecondDegree.Append(Math.Log(maxError)).ToArray();
+				errNonLog = errNonLog.Append(maxError).ToArray();
+			}
 
-			var errors = method.FindError((x, y, t) => Math.Cos(2 * x) * Math.Sinh(y) * Math.Exp(-3 * t));
+			for (int i = 10; i <= 80; i += 10)
+			{
+				@params.BoundaryApproximation = BoundaryApproximationType.SecondDegreeThreePoints;
+				@params.TimeStepCount = i;
+				var method = new AlternatingDirectionMethod(conditions, equation, @params);
+				var result = method.Solve();
+				var errors = method.FindError((x, y, t) => Math.Cos(2 * x) * Math.Sinh(y) * Math.Exp(-3 * t));
+				var maxError = Math.Log(FindMax(errors));
+				FirstDegree = FirstDegree.Append(maxError).ToArray();
+			}
 
-			var maxError = FindMax(errors);
-			var median = FindMedian(errors);
+			var allDegrees = ILMath.horzcat(FirstDegree, SecondDegree).T;
+			errNonLog = errNonLog.T;
 
-			Console.WriteLine($"Max error: {maxError}; median error: {median}");
 			Console.ReadKey();
 		}
 	}
